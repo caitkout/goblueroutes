@@ -3,314 +3,284 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GoBlue Routes — Your schedule. Your route. One map.</title>
+<title>GoBlue Routes — Your week, mapped.</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Public+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* ============================================================
-   GoBlue Routes — Design tokens
-   Not affiliated with or endorsed by the University of Michigan.
-   Colors are inspired by, not copied from, official branding.
-   Theme: Michigan Blue, dark, with maize accents.
-   Type: Fraunces (display) / Public Sans (UI) / Space Mono (data).
-   ============================================================ */
+
 :root{
-  --blue-950:#071a2c;
-  --blue-900:#0c2540;
-  --blue-850:#0f2c49;
-  --blue-800:#153a5c;
-  --blue-700:#1d4d76;
-  --blue-600:#2a628f;
-  --maize-500:#ffcb05;
-  --maize-600:#e6b800;
-  --maize-300:#ffe27a;
-  --ink:#f4f7fb;
-  --ink-soft:#a9bcd1;
-  --muted:#6f87a0;
-  --line:rgba(219,232,246,.14);
-  --line-strong:rgba(219,232,246,.24);
-  --bg:#081a2b;
-  --bg-grad: linear-gradient(180deg, #081a2b 0%, #071c30 55%, #061626 100%);
-  --card:rgba(230,241,252,.045);
-  --card-solid:#0f2842;
-  --card-hover:rgba(230,241,252,.075);
-  --green-bg:rgba(63,209,140,.13); --green-fg:#6be3ac; --green-line:rgba(63,209,140,.38);
-  --yellow-bg:rgba(255,203,5,.13); --yellow-fg:#ffd94d; --yellow-line:rgba(255,203,5,.40);
-  --red-bg:rgba(255,99,99,.14); --red-fg:#ff9494; --red-line:rgba(255,99,99,.40);
-  --radius:16px;
-  --radius-sm:10px;
-  --shadow:0 1px 1px rgba(0,0,0,.2), 0 20px 50px -22px rgba(0,10,24,.75);
-  --shadow-lift:0 1px 1px rgba(0,0,0,.25), 0 30px 70px -20px rgba(0,10,24,.85);
+  --blue:#00274c;
+  --blue-2:#0b3b68;
+  --maize:#ffcb05;
+  --ink:#122033;
+  --muted:#64748b;
+  --paper:#ffffff;
+  --paper-2:#f7f9fc;
+  --line:#e5eaf0;
+  --soft:#eef3f8;
+  --green:#147a50;
+  --yellow:#9a6a00;
+  --red:#b42318;
+  --shadow:0 18px 55px rgba(18,32,51,.08);
+  --shadow-sm:0 7px 25px rgba(18,32,51,.07);
+  --radius:18px;
+  --radius-sm:12px;
   --ease:cubic-bezier(.22,1,.36,1);
-  --font-display:"Fraunces", Georgia, "Times New Roman", serif;
-  --font-ui:"Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --font-mono:"Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --display:"Fraunces", Georgia, serif;
+  --ui:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
-*{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
 body{
-  font-family:var(--font-ui);
-  color:var(--ink); background:var(--bg-grad) fixed; background-color:var(--bg);
+  font-family:var(--ui); color:var(--ink); background:
+  radial-gradient(circle at 92% 4%,rgba(255,203,5,.13),transparent 18rem),
+  linear-gradient(180deg,#fff 0%,#fff 62%,#f7f9fc 100%);
   line-height:1.5; -webkit-font-smoothing:antialiased;
 }
-button{font-family:inherit;}
-a{color:inherit;}
-::selection{background:rgba(255,203,5,.35); color:var(--ink);}
-.container{max-width:1120px;margin:0 auto;padding:0 20px;}
-.hidden{display:none !important;}
+button,input,select{font-family:inherit}
+a{color:inherit}
+::selection{background:var(--maize);color:var(--blue)}
+.container{max-width:1160px;margin:auto;padding:0 24px}
+.hidden{display:none!important}
 
-/* ---------- Header / Nav ---------- */
+/* distinctive editorial header */
 .site-header{
-  position:sticky; top:0; z-index:40;
-  background:rgba(7,20,35,.72); backdrop-filter:blur(14px) saturate(140%);
-  border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:40;background:rgba(255,255,255,.9);
+  backdrop-filter:blur(16px);border-bottom:1px solid var(--line);
 }
-.nav{display:flex; align-items:center; justify-content:space-between; height:68px;}
-.brand{display:flex; align-items:center; gap:11px; font-weight:700; font-size:17px; cursor:pointer; letter-spacing:-.01em; font-family:var(--font-display);}
+.nav{height:74px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--display);font-size:20px;font-weight:600;letter-spacing:-.02em;cursor:pointer}
 .brand-mark{
-  width:32px;height:32px;border-radius:9px;
-  background:linear-gradient(155deg,var(--maize-500),var(--maize-600));
-  display:flex;align-items:center;justify-content:center;position:relative;
-  box-shadow:0 4px 14px -4px rgba(255,203,5,.55);
-  transform:rotate(-6deg);
+  width:36px;height:36px;border-radius:11px 11px 11px 4px;background:var(--blue);
+  color:#fff;display:flex;align-items:center;justify-content:center;position:relative;
+  box-shadow:4px 5px 0 var(--maize);transform:rotate(-3deg)
 }
-.brand-mark span{color:var(--blue-950);font-weight:800;font-size:15px;font-family:var(--font-display);}
-.nav-links{display:flex; gap:6px; align-items:center;}
+.brand-mark:after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:var(--maize);right:7px;top:7px}
+.brand-mark span{font-family:var(--mono);font-size:13px;font-weight:700}
+.nav-links{display:flex;gap:5px;align-items:center}
 .nav-btn{
-  border:none;background:transparent;padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;
-  color:var(--ink-soft); cursor:pointer; transition:background .18s var(--ease),color .18s var(--ease);
-  font-family:var(--font-ui); letter-spacing:.01em;
+  border:0;background:transparent;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:700;
+  color:var(--muted);cursor:pointer;transition:.2s var(--ease)
 }
-.nav-btn:hover{background:rgba(230,241,252,.08);color:var(--ink);}
-.nav-btn.active{background:var(--maize-500);color:var(--blue-950);}
+.nav-btn:hover{background:var(--soft);color:var(--blue)}
+.nav-btn.active{background:var(--blue);color:#fff}
 
-/* ---------- Buttons ---------- */
+/* buttons */
 .btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  border:none;border-radius:8px;padding:13px 22px;font-size:14.5px;font-weight:600;
-  cursor:pointer;transition:transform .12s var(--ease), filter .18s var(--ease), background .18s var(--ease), border-color .18s var(--ease);
-  white-space:nowrap; font-family:var(--font-ui); letter-spacing:.005em;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;
+  padding:13px 20px;font-size:14px;font-weight:800;cursor:pointer;transition:.18s var(--ease);
+  letter-spacing:-.01em
 }
-.btn:active{transform:scale(.98);}
-.btn-primary{background:var(--card-solid);color:var(--ink);border:1px solid var(--line-strong);}
-.btn-primary:hover{background:var(--blue-800); border-color:var(--blue-600);}
-.btn-maize{background:var(--maize-500);color:var(--blue-950);font-weight:700;}
-.btn-maize:hover{background:var(--maize-300);}
-.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong);}
-.btn-ghost:hover{background:rgba(230,241,252,.06); border-color:var(--ink-soft);}
-.btn-sm{padding:9px 15px;font-size:12.5px;border-radius:6px;}
-.btn-danger{background:transparent;color:var(--red-fg);border:1px solid var(--red-line);}
-.btn-danger:hover{background:var(--red-bg);}
-.btn-block{width:100%;}
+.btn:active{transform:scale(.98)}
+.btn-maize{background:var(--maize);color:var(--blue);box-shadow:0 8px 20px rgba(255,203,5,.24)}
+.btn-maize:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(255,203,5,.3)}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 8px 20px rgba(0,39,76,.15)}
+.btn-primary:hover{background:var(--blue-2);transform:translateY(-1px)}
+.btn-ghost{background:#fff;color:var(--blue);border:1px solid #cfd8e3}
+.btn-ghost:hover{background:var(--soft);border-color:#b8c5d3}
+.btn-sm{padding:9px 14px;font-size:12px;border-radius:9px}
+.btn-danger{background:#fff1f0;color:var(--red);border:1px solid #f2c7c4}
+.btn-block{width:100%}
 
-/* ---------- Landing ---------- */
-.hero{padding:96px 0 64px;position:relative;}
-.hero-eyebrow{
-  font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--maize-500); margin-bottom:18px; display:flex; align-items:center; gap:10px;
+/* landing */
+.hero{position:relative;padding:105px 0 95px;overflow:hidden}
+.hero:before{
+  content:"";position:absolute;left:-140px;top:30px;width:310px;height:310px;border:1px solid #dbe4ed;
+  border-radius:50%;opacity:.8
 }
-.hero-eyebrow::before{content:"";width:22px;height:1px;background:var(--maize-500);display:inline-block;}
-.hero h1{font-family:var(--font-display); font-weight:600; font-size:58px;line-height:1.05;letter-spacing:-.02em;margin:0 0 20px;color:var(--ink);max-width:14ch;}
-.hero p.sub{font-size:18px;color:var(--ink-soft);max-width:480px;margin:0 0 34px;font-weight:400;line-height:1.5;}
-.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
-.hero-note{margin-top:22px;font-size:12.5px;color:var(--muted);font-family:var(--font-mono);letter-spacing:.01em;}
-.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
+.hero:after{
+  content:"";position:absolute;right:-110px;bottom:0;width:280px;height:280px;
+  background:linear-gradient(135deg,transparent 49%,var(--maize) 50%,var(--maize) 53%,transparent 54%);
+  opacity:.18;pointer-events:none
+}
+.hero .container{position:relative;z-index:1}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;border:1px solid #d7e0e9;background:#fff;
+  color:var(--blue);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:8px 12px;border-radius:6px;margin-bottom:25px;
+  box-shadow:var(--shadow-sm)
+}
+.hero h1{
+  max-width:850px;margin:0 auto 22px;font-family:var(--display);font-size:68px;line-height:.98;
+  font-weight:500;letter-spacing:-.045em;color:var(--blue)
+}
+.hero h1 .accent{
+  color:var(--blue);font-style:italic;position:relative;white-space:nowrap
+}
+.hero h1 .accent:after{
+  content:"";position:absolute;left:2%;right:-3%;bottom:-5px;height:7px;
+  background:var(--maize);z-index:-1;transform:skewX(-16deg)
+}
+.hero p.sub{max-width:610px;margin:0 auto 34px;color:#536579;font-size:18px}
+.hero-ctas{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.hero-note{margin-top:18px;color:#8a98a8;font:10px var(--mono);letter-spacing:.04em}
 
-.section{padding:64px 0;border-top:1px solid var(--line);}
-.section h2{font-family:var(--font-display); font-weight:600; font-size:30px;letter-spacing:-.01em;margin:0 0 10px;color:var(--ink);max-width:16ch;}
-.section p.lead{color:var(--ink-soft);margin:0 0 8px;font-size:15.5px;max-width:520px;}
-
-/* Editorial numbered list — the numbering here is real: it's the exact
-   order GoBlue Routes checks a transition in, not decoration. */
-.check-list{margin-top:40px;border-top:1px solid var(--line);}
-.check-row{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:26px 0;border-bottom:1px solid var(--line);align-items:baseline;}
-.check-row .idx{font-family:var(--font-mono);font-size:13px;color:var(--maize-500);font-weight:700;margin-right:16px;}
-.check-row h3{font-family:var(--font-display);font-weight:600;font-size:19px;margin:0;color:var(--ink);display:inline;}
-.check-row p{margin:0;color:var(--ink-soft);font-size:14.5px;line-height:1.6;}
+.section{padding:76px 0;border-top:1px solid var(--line)}
+.section h2{font:500 34px var(--display);letter-spacing:-.035em;color:var(--blue);margin:0 0 10px}
+.section p.lead{font-size:15px;color:var(--muted);max-width:620px;margin:0 0 38px}
 
 .landing-preview{
-  margin:0; border-radius:14px;overflow:hidden;border:1px solid var(--line-strong);
-  background:var(--card-solid);
+  max-width:930px;margin:0 auto;border:1px solid #dce4ec;border-radius:22px;background:#fff;
+  box-shadow:var(--shadow);overflow:hidden;transform:rotate(-.35deg)
 }
-.landing-preview-bar{height:34px;background:rgba(230,241,252,.03);display:flex;align-items:center;gap:6px;padding:0 14px;border-bottom:1px solid var(--line);}
-.dot{width:8px;height:8px;border-radius:50%;background:rgba(230,241,252,.16);}
-.landing-preview-body{padding:22px;}
-.mini-timeline .mini-row{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px;font-family:var(--font-mono);color:var(--ink-soft);}
-.mini-timeline .mini-row:last-child{border-bottom:none;}
-.mini-timeline .mini-row b{color:var(--ink); font-weight:700;}
-.mini-verdict{margin-top:18px;padding-top:18px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink-soft);font-family:var(--font-mono);}
+.landing-preview-bar{height:38px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 15px;gap:6px;background:#fbfcfd}
+.dot{width:8px;height:8px;border-radius:50%;background:#d6dee7}
+.landing-preview-body{padding:25px;display:grid;grid-template-columns:1fr 1.35fr;gap:20px}
+.mini-timeline .mini-row{
+  display:flex;gap:11px;padding:13px 0;border-bottom:1px dashed #dfe6ee;font:12px var(--mono);color:var(--muted)
+}
+.mini-timeline .mini-row b{color:var(--blue)}
+.mini-map{
+  min-height:185px;border-radius:14px;background:
+  linear-gradient(135deg,#f4f7fa 0%,#fff 100%);
+  border:1px solid #e0e7ef;display:flex;align-items:center;justify-content:center;
+  color:var(--blue);font:11px var(--mono);position:relative;overflow:hidden
+}
+.mini-map:before,.mini-map:after{content:"";position:absolute;border:2px solid var(--maize);border-radius:50%;width:180px;height:90px;transform:rotate(-25deg)}
+.mini-map:after{width:260px;height:70px;border-color:#d7e1ea;transform:rotate(22deg)}
+.mini-map{isolation:isolate}
+.mini-map::first-line{position:relative;z-index:2}
 
-/* Signature element: the margin meter. Every transition in the product
-   reduces to the same question — does the needed time fit inside the
-   available time? — so one bar, reused everywhere (landing preview,
-   timeline, weekly cards), makes that margin literally visible instead
-   of only color-coding it. */
-.margin-meter{position:relative;height:6px;border-radius:3px;background:rgba(230,241,252,.09);margin:10px 0 4px;overflow:visible;}
-.margin-meter .fill{position:absolute;top:0;left:0;height:100%;border-radius:3px;}
-.margin-meter .fill.green{background:var(--green-fg);}
-.margin-meter .fill.yellow{background:var(--yellow-fg);}
-.margin-meter .fill.red{background:var(--red-fg);}
-.margin-meter .avail-mark{position:absolute;top:-3px;width:2px;height:12px;background:var(--ink);border-radius:1px;}
-.margin-meter-label{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:5px;}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.feature-card{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:23px;
+  transition:.2s var(--ease);position:relative;overflow:hidden
+}
+.feature-card:after{content:"";position:absolute;left:0;bottom:0;width:42px;height:3px;background:var(--maize);transition:.25s var(--ease)}
+.feature-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#ccd7e2}
+.feature-card:hover:after{width:100%}
+.feature-card .icon{
+  width:42px;height:42px;border-radius:10px;background:#f2f6fa;border:1px solid #dfe7ef;
+  display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:18px
+}
+.feature-card h3{font-size:15px;margin:0 0 6px;color:var(--blue)}
+.feature-card p{font-size:13px;color:var(--muted);margin:0}
 
+.site-footer{border-top:1px solid var(--line);padding:34px 0;color:#8794a3;font-size:11px;text-align:center}
 
-footer.site-footer{border-top:1px solid var(--line);padding:36px 0;color:var(--muted);font-size:12.5px;text-align:center;}
+/* pages */
+.page{padding:45px 0 85px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:28px}
+.page-head h1{font:500 34px var(--display);letter-spacing:-.035em;color:var(--blue);margin:0 0 4px}
+.page-head p{margin:0;color:var(--muted);font-size:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 16px rgba(18,32,51,.025)}
+.pad{padding:22px}
 
-/* ---------- Generic page shell ---------- */
-.page{padding:40px 0 84px;}
-.page-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:30px;}
-.page-head h1{font-family:var(--font-display);font-weight:600;font-size:30px;margin:0 0 5px;letter-spacing:-.01em;color:var(--ink);}
-.page-head p{margin:0;color:var(--ink-soft);font-size:14.5px;}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);}
-.pad{padding:22px;}
-
-/* ---------- Schedule Builder ---------- */
-.builder-grid{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;}
-.class-list{display:flex;flex-direction:column;gap:10px;}
+/* forms */
+.builder-grid{display:grid;grid-template-columns:1fr 390px;gap:18px;align-items:start}
+.class-list{display:flex;flex-direction:column;gap:9px}
 .class-item{
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:15px 17px;
-  transition:border-color .18s var(--ease);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;
+  border:1px solid var(--line);border-radius:12px;padding:15px 16px;transition:.18s var(--ease)
 }
-.class-item:hover{border-color:var(--line-strong);}
-.class-item .meta{font-size:13px;color:var(--ink-soft);margin-top:4px;font-family:var(--font-mono);}
-.class-item .title{font-weight:700;font-size:14.5px;}
-.day-pills{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
-.day-pill{font-size:10.5px;font-weight:700;background:rgba(42,98,143,.28);color:var(--ink-soft);padding:3px 8px;border-radius:999px;font-family:var(--font-mono);letter-spacing:.03em;}
-.item-actions{display:flex;gap:6px;flex-shrink:0;}
-.icon-btn{background:transparent;border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:13px;color:var(--ink-soft);transition:background .15s var(--ease),border-color .15s var(--ease);}
-.icon-btn:hover{background:rgba(230,241,252,.07); border-color:var(--line-strong);}
-
-.empty-state{text-align:center;padding:52px 20px;color:var(--ink-soft);border:1px dashed var(--line);border-radius:var(--radius);}
-.empty-state .big{font-size:34px;margin-bottom:10px;}
-
-.form-row{margin-bottom:15px;}
-.form-row label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);}
-.form-row input, .form-row select{
-  width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14.5px;background:var(--card-solid);color:var(--ink);
-  font-family:var(--font-ui); transition:border-color .15s var(--ease);
+.class-item:hover{border-color:#cbd7e2;box-shadow:var(--shadow-sm);transform:translateX(2px)}
+.class-item .title{font-weight:800;font-size:14px;color:var(--blue)}
+.class-item .meta{font:11px var(--mono);color:var(--muted);margin-top:4px}
+.day-pills{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.day-pill{font:9px var(--mono);font-weight:700;background:#f0f4f8;color:#536579;padding:3px 7px;border-radius:5px}
+.item-actions{display:flex;gap:5px}
+.icon-btn{background:#fff;border:1px solid #dce4ec;border-radius:8px;width:31px;height:31px;cursor:pointer;color:#64748b}
+.icon-btn:hover{background:var(--soft);color:var(--blue)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted);border:1px dashed #cfd9e3;border-radius:15px;background:#fbfcfd}
+.empty-state .big{font-size:30px;margin-bottom:8px}
+.form-row{margin-bottom:15px}
+.form-row label{display:block;font:9px var(--mono);font-weight:700;color:#7b8999;margin-bottom:7px;text-transform:uppercase;letter-spacing:.08em}
+.form-row input,.form-row select{
+  width:100%;padding:11px 12px;border:1px solid #d7e0e9;border-radius:9px;font-size:13.5px;
+  background:#fff;color:var(--ink);transition:.15s
 }
-.form-row input::placeholder{color:var(--muted);}
-.form-row input:focus, .form-row select:focus{outline:none; border-color:var(--maize-500); box-shadow:0 0 0 3px rgba(255,203,5,.15);}
-.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.day-toggle-row{display:flex;gap:6px;flex-wrap:wrap;}
-.day-toggle{
-  border:1px solid var(--line);background:transparent;border-radius:9px;width:44px;height:38px;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-soft);
-  font-family:var(--font-mono); transition:all .15s var(--ease);
+.form-row input:focus,.form-row select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,39,76,.08)}
+.form-row input::placeholder{color:#a0acb9}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.day-toggle-row{display:flex;gap:5px;flex-wrap:wrap}
+.day-toggle{border:1px solid #d8e1e9;background:#fff;border-radius:8px;width:43px;height:37px;font:10px var(--mono);font-weight:700;color:#718093;cursor:pointer}
+.day-toggle:hover{border-color:#b7c5d3}
+.day-toggle.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.building-suggest{position:relative}
+.suggest-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d5dee7;border-radius:10px;box-shadow:var(--shadow);max-height:240px;overflow:auto;z-index:20;margin-top:5px}
+.suggest-item{padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #eef2f5}
+.suggest-item:hover{background:#f5f8fb}
+.suggest-item small{display:block;color:#8997a7;font:9px var(--mono);margin-top:2px}
+.upload-box{border:1.5px dashed #cbd7e2;border-radius:14px;padding:25px;text-align:center;background:#fbfcfd}
+.upload-box input[type=file]{margin-top:13px;color:var(--muted);font-size:12px}
+.warning-banner{background:#fff8df;border:1px solid #f0d47a;color:#7c5a00;border-radius:10px;padding:13px;font-size:13px;margin-bottom:16px}
+
+/* tables */
+.confirm-table{width:100%;border-collapse:collapse;font-size:13px}
+.confirm-table th{text-align:left;color:#7b8999;font:9px var(--mono);text-transform:uppercase;letter-spacing:.07em;padding:9px;border-bottom:1px solid #cfd9e3}
+.confirm-table td{padding:9px;border-bottom:1px solid #edf1f5}
+.confirm-table input,.confirm-table select{border:1px solid #d7e0e9;border-radius:7px;padding:7px 8px;font-size:12px;width:100%;background:#fff;color:var(--ink)}
+.tag-unknown{background:#fff0ef;color:var(--red);font:9px var(--mono);font-weight:700;padding:3px 7px;border-radius:5px}
+
+/* weekly */
+.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.week-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:19px;cursor:pointer;transition:.2s var(--ease);position:relative}
+.week-card:before{content:"";position:absolute;top:0;left:16px;right:16px;height:3px;background:var(--maize);border-radius:0 0 4px 4px}
+.week-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#ccd7e2}
+.week-card h3{font:500 18px var(--display);color:var(--blue);margin:0 0 14px}
+.week-stat{display:flex;justify-content:space-between;padding:4px 0;color:var(--muted);font:10px var(--mono)}
+.week-stat b{color:var(--ink)}
+.tight-badge{display:inline-block;margin-top:10px;font:9px var(--mono);font-weight:700;padding:4px 8px;border-radius:5px}
+.tight-badge.ok{background:#eaf7f0;color:var(--green)}
+.tight-badge.warn{background:#fff5dd;color:var(--yellow)}
+
+/* day view */
+.day-tabs{display:flex;gap:5px;margin-bottom:22px;overflow-x:auto}
+.day-tab{border:1px solid #d7e0e9;background:#fff;padding:9px 18px;border-radius:8px;font:10px var(--mono);font-weight:700;color:#6c7b8c;cursor:pointer}
+.day-tab:hover{border-color:#b9c7d4}
+.day-tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.summary-tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.summary-tile .num{font:500 25px var(--display);color:var(--blue)}
+.summary-tile .lab{font:9px var(--mono);color:#8a98a8;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.day-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:18px;align-items:start}
+#map{width:100%;height:560px;border-radius:16px;border:1px solid #d8e1e9;overflow:hidden}
+.timeline{display:flex;flex-direction:column}
+.class-block{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+.class-block .time{font:10px var(--mono);font-weight:700;color:var(--blue-2)}
+.class-block .course{font:500 17px var(--display);color:var(--blue);margin:3px 0}
+.class-block .loc{font-size:12.5px;color:var(--muted)}
+.transition{margin:6px 0 6px 16px;padding:10px 12px;border-left:3px solid #dbe3eb;font-size:12px;border-radius:0 8px 8px 0}
+.transition.green{border-color:#75c49d;background:#eff9f4;color:#176847}
+.transition.yellow{border-color:#e5c15d;background:#fff9e8;color:#805f00}
+.transition.red{border-color:#e28a83;background:#fff1f0;color:#a21d15}
+.transition.campus-transfer{border-left-style:dashed}
+.transition.unsupported{border-color:#cbd5df;border-left-style:dotted;background:#f7f9fb;color:#68788a}
+.transition .headline{font-weight:800;font-size:12px}
+.transition .leaveby{font:9px var(--mono);opacity:.82;margin-top:3px}
+.transition .bus-badge{display:inline-flex;align-items:center;gap:4px;font:9px var(--mono);font-weight:700;padding:2px 7px;border-radius:5px;background:var(--maize);color:var(--blue);margin-right:5px}
+.overlap-warning{background:#fff1f0;border:1px solid #f0c4c0;color:#a21d15;border-radius:10px;padding:12px 14px;font-size:12.5px;margin-bottom:15px}
+.footnote{font:9.5px var(--mono);color:#8a98a8;margin-top:9px}
+.badge-demo{background:var(--maize);color:var(--blue);font:9px var(--mono);font-weight:800;padding:3px 7px;border-radius:4px;margin-left:7px;vertical-align:middle}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,20,40,.35);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal{background:#fff;border:1px solid #dbe3eb;border-radius:17px;max-width:480px;width:100%;padding:25px;box-shadow:0 30px 90px rgba(0,20,40,.18)}
+.modal h3{margin:0 0 6px;font:500 21px var(--display);color:var(--blue)}
+.modal p{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:18px}
+
+/* leaflet refinements */
+.leaflet-control-zoom a{color:var(--blue)!important}
+.leaflet-control-attribution{font-size:8px!important}
+
+/* responsive */
+@media(max-width:900px){
+  .hero{padding:80px 0 70px}.hero h1{font-size:48px}
+  .feature-grid{grid-template-columns:1fr}.builder-grid,.day-grid{grid-template-columns:1fr}
+  .week-grid{grid-template-columns:1fr 1fr}.summary-bar{grid-template-columns:1fr 1fr}
+  #map{height:390px}.landing-preview-body{grid-template-columns:1fr}
 }
-.day-toggle:hover{border-color:var(--line-strong);}
-.day-toggle.on{background:var(--maize-500);border-color:var(--maize-500);color:var(--blue-950);}
-.building-suggest{position:relative;}
-.suggest-list{
-  position:absolute;top:100%;left:0;right:0;background:var(--card-solid);border:1px solid var(--line-strong);border-radius:10px;
-  box-shadow:var(--shadow-lift);max-height:240px;overflow:auto;z-index:20;margin-top:6px;
-}
-.suggest-item{padding:10px 13px;cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--line);}
-.suggest-item:last-child{border-bottom:none;}
-.suggest-item:hover{background:rgba(230,241,252,.07);}
-.suggest-item small{color:var(--muted);display:block;font-size:11px;font-family:var(--font-mono);margin-top:2px;}
-
-.upload-box{border:1.5px dashed var(--line-strong);border-radius:var(--radius);padding:28px;text-align:center;background:transparent;}
-.upload-box input[type=file]{margin-top:14px;color:var(--ink-soft);font-size:13px;}
-
-.warning-banner{
-  background:var(--yellow-bg);border:1px solid var(--yellow-line);color:var(--yellow-fg);
-  border-radius:10px;padding:13px 15px;font-size:13.5px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start;
-}
-
-/* ---------- Confirm screen table ---------- */
-.confirm-table{width:100%;border-collapse:collapse;font-size:13.5px;}
-.confirm-table th{text-align:left;color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:9px 10px;border-bottom:1px solid var(--line-strong);font-family:var(--font-mono);}
-.confirm-table td{padding:10px 10px;border-bottom:1px solid var(--line);}
-.confirm-table input, .confirm-table select{border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;background:var(--card-solid);color:var(--ink);}
-.tag-unknown{background:var(--red-bg);color:var(--red-fg);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;font-family:var(--font-mono);}
-
-/* ---------- Weekly overview ---------- */
-.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
-.week-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:19px;cursor:pointer;transition:border-color .18s var(--ease), transform .18s var(--ease), background .18s var(--ease);}
-.week-card:hover{border-color:var(--maize-500);transform:translateY(-3px); background:var(--card-hover);}
-.week-card h3{margin:0 0 13px;font-size:15px;font-family:var(--font-display);font-weight:600;}
-.week-stat{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);padding:4px 0;font-family:var(--font-mono);}
-.week-stat b{color:var(--ink);}
-.tight-badge{display:inline-block;margin-top:11px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;font-family:var(--font-mono);}
-.tight-badge.ok{background:var(--green-bg);color:var(--green-fg);}
-.tight-badge.warn{background:var(--red-bg);color:var(--red-fg);}
-
-/* ---------- Day detail ---------- */
-.day-tabs{display:flex;gap:6px;margin-bottom:24px;overflow-x:auto;}
-.day-tab{border:1px solid var(--line);background:transparent;padding:10px 20px;border-radius:999px;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--ink-soft);flex-shrink:0;font-family:var(--font-mono);transition:all .15s var(--ease);}
-.day-tab:hover{border-color:var(--line-strong);}
-.day-tab.active{background:var(--maize-500);color:var(--blue-950);border-color:var(--maize-500);}
-
-.summary-bar{display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:28px;}
-.summary-tile{flex:1;padding:16px 20px 16px 0;border-right:1px solid var(--line);}
-.summary-tile:last-child{border-right:none;}
-.summary-tile .num{font-size:26px;font-weight:600;font-family:var(--font-display);color:var(--ink);}
-.summary-tile .lab{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);margin-top:3px;}
-
-.day-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start;}
-#map{width:100%;height:560px;border-radius:var(--radius);border:1px solid var(--line-strong);}
-.timeline{display:flex;flex-direction:column;}
-.class-block{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:15px 17px;}
-.class-block .time{font-size:12px;font-weight:700;color:var(--maize-500);font-family:var(--font-mono);letter-spacing:.02em;}
-.class-block .course{font-weight:700;font-size:15.5px;margin:3px 0;font-family:var(--font-display);}
-.class-block .loc{font-size:13px;color:var(--ink-soft);}
-.transition{
-  margin:7px 0 7px 17px;padding:11px 13px;border-left:3px solid var(--line);font-size:12.5px;
-  display:flex;flex-direction:column;gap:3px; border-radius:0 8px 8px 0;
-}
-.transition.green{border-color:var(--green-line);background:var(--green-bg);color:var(--green-fg);}
-.transition.yellow{border-color:var(--yellow-line);background:var(--yellow-bg);color:var(--yellow-fg);}
-.transition.red{border-color:var(--red-line);background:var(--red-bg);color:var(--red-fg);}
-.transition .headline{font-weight:700;font-size:13px;}
-.transition .leaveby{font-size:11.5px;opacity:.85;font-family:var(--font-mono);}
-/* Campus-transfer transitions (North <-> Central) get a dashed left
-   border + bus badge so they're never visually confused with a normal
-   walking transition, even though they reuse the green/yellow/red
-   status colors. */
-.transition.campus-transfer{border-left-style:dashed;}
-.transition .bus-badge{
-  display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10.5px;
-  font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;
-  background:rgba(255,203,5,.16);color:var(--maize-300);border:1px solid rgba(255,203,5,.35);margin-right:6px;
-}
-.transition.unsupported{border-color:var(--line-strong);border-left-style:dotted;background:rgba(230,241,252,.05);color:var(--ink-soft);}
-.overlap-warning{
-  background:var(--red-bg);border:1px solid var(--red-line);color:var(--red-fg);border-radius:10px;
-  padding:13px 15px;font-size:13px;margin-bottom:16px;
+@media(max-width:520px){
+  .container{padding:0 16px}.hero h1{font-size:39px}.hero p.sub{font-size:16px}
+  .week-grid{grid-template-columns:1fr}.form-2col{grid-template-columns:1fr}
+  .nav{height:66px}.brand{font-size:17px}.nav-btn{padding:8px 10px}
 }
 
-.footnote{font-size:12px;color:var(--muted);margin-top:10px;}
-.badge-demo{background:var(--maize-500);color:var(--blue-950);font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;font-family:var(--font-mono);}
-
-/* ---------- Modal ---------- */
-.modal-overlay{position:fixed;inset:0;background:rgba(4,12,22,.6);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;}
-.modal{background:var(--card-solid);border:1px solid var(--line-strong);border-radius:18px;max-width:480px;width:100%;padding:26px;box-shadow:var(--shadow-lift);}
-.modal h3{margin:0 0 7px;font-family:var(--font-display);font-weight:600;font-size:19px;}
-.modal p{color:var(--ink-soft);font-size:14px;margin:0 0 18px;}
-.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
-
-/* ---------- Responsive ---------- */
-@media (max-width:900px){
-  .hero h1{font-size:34px;}
-  .hero p.sub{font-size:16px;}
-  .hero-grid{grid-template-columns:1fr;gap:32px;}
-  .check-row{grid-template-columns:1fr;gap:6px;}
-  .builder-grid{grid-template-columns:1fr;}
-  .day-grid{grid-template-columns:1fr;}
-  .week-grid{grid-template-columns:1fr 1fr;}
-  .summary-bar{flex-wrap:wrap;}
-  .summary-tile{flex:0 0 50%;border-right:none;padding-right:10px;margin-bottom:10px;}
-  #map{height:340px;}
-  .nav-links .nav-label{display:none;}
-}
-@media (max-width:520px){
-  .week-grid{grid-template-columns:1fr;}
-  .form-2col{grid-template-columns:1fr;}
-}
 </style>
 
 </head>
@@ -761,23 +731,6 @@ function fmtMinutesAsClock(mins){
   return fmtTime(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
 }
 
-// Signature component — see .margin-meter in CSS. Renders "needed"
-// minutes as a filled bar (colored by status) against a fixed scale,
-// with a tick marking exactly where "available" falls. When needed
-// time runs past available time, the fill visibly overshoots the tick
-// instead of just turning red — the overrun is literally the extra bar.
-const MARGIN_METER_SCALE_MIN = 40;
-function renderMarginMeter(available, needed, status){
-  const scale = MARGIN_METER_SCALE_MIN;
-  const fillPct = Math.max(3, Math.min(112, (needed/scale)*100));
-  const markPct = Math.max(0, Math.min(100, (available/scale)*100));
-  return `<div class="margin-meter">
-    <div class="fill ${status}" style="width:${Math.min(fillPct,100)}%"></div>
-    <div class="avail-mark" style="left:calc(${markPct}% - 1px)"></div>
-  </div>
-  <div class="margin-meter-label"><span>${needed} min needed</span><span>${available} min available</span></div>`;
-}
-
 /* ---------------------------------------------------------------------- *
  * LIB: /lib/analysis.js
  * ---------------------------------------------------------------------- */
@@ -1039,29 +992,31 @@ function renderModal(){
  * VIEW: Landing
  * ---------------------------------------------------------------------- */
 function renderLanding(){
-  const meter = renderMarginMeter(10, 20, "red");
   return `
   <section class="hero">
-    <div class="container hero-grid">
-      <div>
-        <div class="hero-eyebrow">University of Michigan · Ann Arbor</div>
-        <h1>Know the exact minute you have to leave.</h1>
-        <p class="sub">GoBlue Routes turns your Michigan schedule into a walk-by-walk, bus-by-bus plan — and flags it before 8am if a transition just won't work.</p>
-        <div class="hero-ctas">
-          <button class="btn btn-maize" id="cta-build">Build my schedule</button>
-          <button class="btn btn-ghost" id="cta-demo">Try a demo</button>
-        </div>
-        <div class="hero-note">No account. Nothing leaves your browser.</div>
+    <div class="container">
+      <div class="hero-badge">🧭 Built for Michigan students</div>
+      <h1>Your schedule.<br/>Your route. <span class="accent">One map.</span></h1>
+      <p class="sub">Upload your Michigan schedule and see exactly how to get from class to class.</p>
+      <div class="hero-ctas">
+        <button class="btn btn-maize" id="cta-build">Build My Schedule</button>
+        <button class="btn btn-ghost" id="cta-demo">Try a Demo</button>
       </div>
+      <div class="hero-note">No account needed. Your schedule stays in your browser.</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
       <div class="landing-preview">
         <div class="landing-preview-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
         <div class="landing-preview-body">
           <div class="mini-timeline">
-            <div class="mini-row"><b>10:40 AM</b>&nbsp;EECS 370 · EECS Building</div>
-            <div class="mini-row"><b>12:10 PM</b>&nbsp;MATH 214 · East Hall</div>
+            <div class="mini-row"><b>9:00 AM</b>&nbsp;EECS 281 · Beyster 169</div>
+            <div class="mini-row"><b>10:30 AM</b>&nbsp;EECS 370 · EECS 1311</div>
+            <div class="mini-row"><b>12:00 PM</b>&nbsp;MATH 214 · East Hall</div>
           </div>
-          ${meter}
-          <div class="mini-verdict">🚌 North → Central campus transfer — 20 min needed, only 10 min between classes. GoBlue Routes catches this before it becomes a missed class.</div>
+          <div class="mini-map">Beyster → EECS → East Hall &nbsp;·&nbsp; ~19 min walking</div>
         </div>
       </div>
     </div>
@@ -1069,27 +1024,16 @@ function renderLanding(){
 
   <section class="section">
     <div class="container">
-      <h2>What happens to every transition</h2>
-      <p class="lead">Same four checks, run automatically for every gap in your week.</p>
-      <div class="check-list">
-        <div class="check-row">
-          <div><span class="idx">01</span><h3>Classify it</h3></div>
-          <p>Same campus, North ↔ Central, or a combination the app doesn't model yet (Medical, The Hill, Ross Athletic) — read straight from the Michigan building catalog.</p>
-        </div>
-        <div class="check-row">
-          <div><span class="idx">02</span><h3>Route or estimate</h3></div>
-          <p>Same-campus legs get a real pedestrian route along sidewalks and paths. North ↔ Central legs get a 15–20 min Blue Bus estimate instead of a pretend walk.</p>
-        </div>
-        <div class="check-row">
-          <div><span class="idx">03</span><h3>Measure the margin</h3></div>
-          <p>Time needed against time available, shown as an actual margin — not just a green/yellow/red label.</p>
-        </div>
-        <div class="check-row">
-          <div><span class="idx">04</span><h3>Give you a leave-by time</h3></div>
-          <p>Every transition, every day of the week — so "will I make it?" has an answer before you're already walking.</p>
-        </div>
+      <h2>Built around how your week actually moves</h2>
+      <p class="lead">Three things every student needs before 8am: where to go, when to leave, and whether they'll make it.</p>
+      <div class="feature-grid">
+        <div class="feature-card"><div class="icon">🗺️</div><h3>Automatic routes</h3><p>Every day of your week turned into a walking route between classes, on a real map.</p></div>
+        <div class="feature-card"><div class="icon">⏱️</div><h3>"Will I make it?"</h3><p>Every transition is checked against your actual gap between classes — comfortable, tight, or very tight.</p></div>
+        <div class="feature-card"><div class="icon">📍</div><h3>Michigan buildings</h3><p>Search by name — "Electrical Engineering" finds EECS. No abbreviations to memorize.</p></div>
+        <div class="feature-card"><div class="icon">📤</div><h3>CSV upload</h3><p>Already have your schedule somewhere else? Upload a CSV and confirm the classes in seconds.</p></div>
+        <div class="feature-card"><div class="icon">🔒</div><h3>Private by default</h3><p>No account, no server database for the MVP. Your schedule lives in your browser.</p></div>
+        <div class="feature-card"><div class="icon">📅</div><h3>Weekly overview</h3><p>See total walking time and tight transitions for every day at a glance.</p></div>
       </div>
-      <p class="footnote" style="margin-top:28px;">Also in the box: search 600+ Michigan buildings by name or abbreviation, import a schedule from CSV, and a weekly overview of every tight transition. All of it stays in your browser — no account, no server database.</p>
     </div>
   </section>
   `;
@@ -1540,7 +1484,6 @@ function renderTransition(t){
     return `
     <div class="transition campus-transfer ${t.status}">
       <div class="headline"><span class="bus-badge">🚌 ${t.route.direction}</span>${headline}</div>
-      ${renderMarginMeter(t.available, t.route.maxDurationMin, t.status)}
       <div class="leaveby">~${t.route.maxDurationMin} min needed (conservative estimate) · ${t.buffer>=0? t.buffer+" min buffer" : Math.abs(t.buffer)+" min short"} · Leave ${esc(t.prev.building?BUILDINGS[t.prev.building].name:"")} by ${t.leaveBy} · Michigan Blue Bus</div>
     </div>`;
   }
@@ -1551,7 +1494,6 @@ function renderTransition(t){
   return `
   <div class="transition ${t.status}">
     <div class="headline">${icon} ${t.label} — ${t.available} min available, ~${t.travel} min walk${sameNote}</div>
-    ${renderMarginMeter(t.available, t.travel, t.status)}
     <div class="leaveby">${t.travel} min walk · ${t.buffer>=0? t.buffer+" min buffer" : Math.abs(t.buffer)+" min short"} · Leave ${esc(t.prev.building?BUILDINGS[t.prev.building].name:"")} by ${t.leaveBy}${estimatedNote}</div>
   </div>`;
 }
