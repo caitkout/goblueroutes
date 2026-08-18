@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GoBlue Routes — Your schedule. Your route. One map.</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Public+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   GoBlue Routes — Design tokens
+   Not affiliated with or endorsed by the University of Michigan.
+   Colors are inspired by, not copied from, official branding.
+   Theme: Michigan Blue, dark, with maize accents.
+   Type: Fraunces (display) / Public Sans (UI) / Space Mono (data).
+   ============================================================ */
+:root{
+  --blue-950:#071a2c;
+  --blue-900:#0c2540;
+  --blue-850:#0f2c49;
+  --blue-800:#153a5c;
+  --blue-700:#1d4d76;
+  --blue-600:#2a628f;
+  --maize-500:#ffcb05;
+  --maize-600:#e6b800;
+  --maize-300:#ffe27a;
+  --ink:#f4f7fb;
+  --ink-soft:#a9bcd1;
+  --muted:#6f87a0;
+  --line:rgba(219,232,246,.14);
+  --line-strong:rgba(219,232,246,.24);
+  --bg:#081a2b;
+  --bg-grad: linear-gradient(180deg, #081a2b 0%, #071c30 55%, #061626 100%);
+  --card:rgba(230,241,252,.045);
+  --card-solid:#0f2842;
+  --card-hover:rgba(230,241,252,.075);
+  --green-bg:rgba(63,209,140,.13); --green-fg:#6be3ac; --green-line:rgba(63,209,140,.38);
+  --yellow-bg:rgba(255,203,5,.13); --yellow-fg:#ffd94d; --yellow-line:rgba(255,203,5,.40);
+  --red-bg:rgba(255,99,99,.14); --red-fg:#ff9494; --red-line:rgba(255,99,99,.40);
+  --radius:16px;
+  --radius-sm:10px;
+  --shadow:0 1px 1px rgba(0,0,0,.2), 0 20px 50px -22px rgba(0,10,24,.75);
+  --shadow-lift:0 1px 1px rgba(0,0,0,.25), 0 30px 70px -20px rgba(0,10,24,.85);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --font-display:"Fraunces", Georgia, "Times New Roman", serif;
+  --font-ui:"Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono:"Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font-ui);
+  color:var(--ink); background:var(--bg-grad) fixed; background-color:var(--bg);
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;}
+a{color:inherit;}
+::selection{background:rgba(255,203,5,.35); color:var(--ink);}
+.container{max-width:1120px;margin:0 auto;padding:0 20px;}
+.hidden{display:none !important;}
+
+/* ---------- Header / Nav ---------- */
+.site-header{
+  position:sticky; top:0; z-index:40;
+  background:rgba(7,20,35,.72); backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--line);
+}
+.nav{display:flex; align-items:center; justify-content:space-between; height:68px;}
+.brand{display:flex; align-items:center; gap:11px; font-weight:700; font-size:17px; cursor:pointer; letter-spacing:-.01em; font-family:var(--font-display);}
+.brand-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(155deg,var(--maize-500),var(--maize-600));
+  display:flex;align-items:center;justify-content:center;position:relative;
+  box-shadow:0 4px 14px -4px rgba(255,203,5,.55);
+  transform:rotate(-6deg);
+}
+.brand-mark span{color:var(--blue-950);font-weight:800;font-size:15px;font-family:var(--font-display);}
+.nav-links{display:flex; gap:6px; align-items:center;}
+.nav-btn{
+  border:none;background:transparent;padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;
+  color:var(--ink-soft); cursor:pointer; transition:background .18s var(--ease),color .18s var(--ease);
+  font-family:var(--font-ui); letter-spacing:.01em;
+}
+.nav-btn:hover{background:rgba(230,241,252,.08);color:var(--ink);}
+.nav-btn.active{background:var(--maize-500);color:var(--blue-950);}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:none;border-radius:8px;padding:13px 22px;font-size:14.5px;font-weight:600;
+  cursor:pointer;transition:transform .12s var(--ease), filter .18s var(--ease), background .18s var(--ease), border-color .18s var(--ease);
+  white-space:nowrap; font-family:var(--font-ui); letter-spacing:.005em;
+}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--card-solid);color:var(--ink);border:1px solid var(--line-strong);}
+.btn-primary:hover{background:var(--blue-800); border-color:var(--blue-600);}
+.btn-maize{background:var(--maize-500);color:var(--blue-950);font-weight:700;}
+.btn-maize:hover{background:var(--maize-300);}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong);}
+.btn-ghost:hover{background:rgba(230,241,252,.06); border-color:var(--ink-soft);}
+.btn-sm{padding:9px 15px;font-size:12.5px;border-radius:6px;}
+.btn-danger{background:transparent;color:var(--red-fg);border:1px solid var(--red-line);}
+.btn-danger:hover{background:var(--red-bg);}
+.btn-block{width:100%;}
+
+/* ---------- Landing ---------- */
+.hero{padding:96px 0 64px;position:relative;}
+.hero-eyebrow{
+  font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--maize-500); margin-bottom:18px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow::before{content:"";width:22px;height:1px;background:var(--maize-500);display:inline-block;}
+.hero h1{font-family:var(--font-display); font-weight:600; font-size:58px;line-height:1.05;letter-spacing:-.02em;margin:0 0 20px;color:var(--ink);max-width:14ch;}
+.hero p.sub{font-size:18px;color:var(--ink-soft);max-width:480px;margin:0 0 34px;font-weight:400;line-height:1.5;}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-note{margin-top:22px;font-size:12.5px;color:var(--muted);font-family:var(--font-mono);letter-spacing:.01em;}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
+
+.section{padding:64px 0;border-top:1px solid var(--line);}
+.section h2{font-family:var(--font-display); font-weight:600; font-size:30px;letter-spacing:-.01em;margin:0 0 10px;color:var(--ink);max-width:16ch;}
+.section p.lead{color:var(--ink-soft);margin:0 0 8px;font-size:15.5px;max-width:520px;}
+
+/* Editorial numbered list — the numbering here is real: it's the exact
+   order GoBlue Routes checks a transition in, not decoration. */
+.check-list{margin-top:40px;border-top:1px solid var(--line);}
+.check-row{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:26px 0;border-bottom:1px solid var(--line);align-items:baseline;}
+.check-row .idx{font-family:var(--font-mono);font-size:13px;color:var(--maize-500);font-weight:700;margin-right:16px;}
+.check-row h3{font-family:var(--font-display);font-weight:600;font-size:19px;margin:0;color:var(--ink);display:inline;}
+.check-row p{margin:0;color:var(--ink-soft);font-size:14.5px;line-height:1.6;}
+
+.landing-preview{
+  margin:0; border-radius:14px;overflow:hidden;border:1px solid var(--line-strong);
+  background:var(--card-solid);
+}
+.landing-preview-bar{height:34px;background:rgba(230,241,252,.03);display:flex;align-items:center;gap:6px;padding:0 14px;border-bottom:1px solid var(--line);}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(230,241,252,.16);}
+.landing-preview-body{padding:22px;}
+.mini-timeline .mini-row{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px;font-family:var(--font-mono);color:var(--ink-soft);}
+.mini-timeline .mini-row:last-child{border-bottom:none;}
+.mini-timeline .mini-row b{color:var(--ink); font-weight:700;}
+.mini-verdict{margin-top:18px;padding-top:18px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink-soft);font-family:var(--font-mono);}
+
+/* Signature element: the margin meter. Every transition in the product
+   reduces to the same question — does the needed time fit inside the
+   available time? — so one bar, reused everywhere (landing preview,
+   timeline, weekly cards), makes that margin literally visible instead
+   of only color-coding it. */
+.margin-meter{position:relative;height:6px;border-radius:3px;background:rgba(230,241,252,.09);margin:10px 0 4px;overflow:visible;}
+.margin-meter .fill{position:absolute;top:0;left:0;height:100%;border-radius:3px;}
+.margin-meter .fill.green{background:var(--green-fg);}
+.margin-meter .fill.yellow{background:var(--yellow-fg);}
+.margin-meter .fill.red{background:var(--red-fg);}
+.margin-meter .avail-mark{position:absolute;top:-3px;width:2px;height:12px;background:var(--ink);border-radius:1px;}
+.margin-meter-label{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:5px;}
+
+
+footer.site-footer{border-top:1px solid var(--line);padding:36px 0;color:var(--muted);font-size:12.5px;text-align:center;}
+
+/* ---------- Generic page shell ---------- */
+.page{padding:40px 0 84px;}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:30px;}
+.page-head h1{font-family:var(--font-display);font-weight:600;font-size:30px;margin:0 0 5px;letter-spacing:-.01em;color:var(--ink);}
+.page-head p{margin:0;color:var(--ink-soft);font-size:14.5px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);}
+.pad{padding:22px;}
+
+/* ---------- Schedule Builder ---------- */
+.builder-grid{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;}
+.class-list{display:flex;flex-direction:column;gap:10px;}
+.class-item{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:15px 17px;
+  transition:border-color .18s var(--ease);
+}
+.class-item:hover{border-color:var(--line-strong);}
+.class-item .meta{font-size:13px;color:var(--ink-soft);margin-top:4px;font-family:var(--font-mono);}
+.class-item .title{font-weight:700;font-size:14.5px;}
+.day-pills{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
+.day-pill{font-size:10.5px;font-weight:700;background:rgba(42,98,143,.28);color:var(--ink-soft);padding:3px 8px;border-radius:999px;font-family:var(--font-mono);letter-spacing:.03em;}
+.item-actions{display:flex;gap:6px;flex-shrink:0;}
+.icon-btn{background:transparent;border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:13px;color:var(--ink-soft);transition:background .15s var(--ease),border-color .15s var(--ease);}
+.icon-btn:hover{background:rgba(230,241,252,.07); border-color:var(--line-strong);}
+
+.empty-state{text-align:center;padding:52px 20px;color:var(--ink-soft);border:1px dashed var(--line);border-radius:var(--radius);}
+.empty-state .big{font-size:34px;margin-bottom:10px;}
+
+.form-row{margin-bottom:15px;}
+.form-row label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);}
+.form-row input, .form-row select{
+  width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14.5px;background:var(--card-solid);color:var(--ink);
+  font-family:var(--font-ui); transition:border-color .15s var(--ease);
+}
+.form-row input::placeholder{color:var(--muted);}
+.form-row input:focus, .form-row select:focus{outline:none; border-color:var(--maize-500); box-shadow:0 0 0 3px rgba(255,203,5,.15);}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.day-toggle-row{display:flex;gap:6px;flex-wrap:wrap;}
+.day-toggle{
+  border:1px solid var(--line);background:transparent;border-radius:9px;width:44px;height:38px;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-soft);
+  font-family:var(--font-mono); transition:all .15s var(--ease);
+}
+.day-toggle:hover{border-color:var(--line-strong);}
+.day-toggle.on{background:var(--maize-500);border-color:var(--maize-500);color:var(--blue-950);}
+.building-suggest{position:relative;}
+.suggest-list{
+  position:absolute;top:100%;left:0;right:0;background:var(--card-solid);border:1px solid var(--line-strong);border-radius:10px;
+  box-shadow:var(--shadow-lift);max-height:240px;overflow:auto;z-index:20;margin-top:6px;
+}
+.suggest-item{padding:10px 13px;cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--line);}
+.suggest-item:last-child{border-bottom:none;}
+.suggest-item:hover{background:rgba(230,241,252,.07);}
+.suggest-item small{color:var(--muted);display:block;font-size:11px;font-family:var(--font-mono);margin-top:2px;}
+
+.upload-box{border:1.5px dashed var(--line-strong);border-radius:var(--radius);padding:28px;text-align:center;background:transparent;}
+.upload-box input[type=file]{margin-top:14px;color:var(--ink-soft);font-size:13px;}
+
+.warning-banner{
+  background:var(--yellow-bg);border:1px solid var(--yellow-line);color:var(--yellow-fg);
+  border-radius:10px;padding:13px 15px;font-size:13.5px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start;
+}
+
+/* ---------- Confirm screen table ---------- */
+.confirm-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.confirm-table th{text-align:left;color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:9px 10px;border-bottom:1px solid var(--line-strong);font-family:var(--font-mono);}
+.confirm-table td{padding:10px 10px;border-bottom:1px solid var(--line);}
+.confirm-table input, .confirm-table select{border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;background:var(--card-solid);color:var(--ink);}
+.tag-unknown{background:var(--red-bg);color:var(--red-fg);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;font-family:var(--font-mono);}
+
+/* ---------- Weekly overview ---------- */
+.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.week-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:19px;cursor:pointer;transition:border-color .18s var(--ease), transform .18s var(--ease), background .18s var(--ease);}
+.week-card:hover{border-color:var(--maize-500);transform:translateY(-3px); background:var(--card-hover);}
+.week-card h3{margin:0 0 13px;font-size:15px;font-family:var(--font-display);font-weight:600;}
+.week-stat{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);padding:4px 0;font-family:var(--font-mono);}
+.week-stat b{color:var(--ink);}
+.tight-badge{display:inline-block;margin-top:11px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;font-family:var(--font-mono);}
+.tight-badge.ok{background:var(--green-bg);color:var(--green-fg);}
+.tight-badge.warn{background:var(--red-bg);color:var(--red-fg);}
+
+/* ---------- Day detail ---------- */
+.day-tabs{display:flex;gap:6px;margin-bottom:24px;overflow-x:auto;}
+.day-tab{border:1px solid var(--line);background:transparent;padding:10px 20px;border-radius:999px;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--ink-soft);flex-shrink:0;font-family:var(--font-mono);transition:all .15s var(--ease);}
+.day-tab:hover{border-color:var(--line-strong);}
+.day-tab.active{background:var(--maize-500);color:var(--blue-950);border-color:var(--maize-500);}
+
+.summary-bar{display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:28px;}
+.summary-tile{flex:1;padding:16px 20px 16px 0;border-right:1px solid var(--line);}
+.summary-tile:last-child{border-right:none;}
+.summary-tile .num{font-size:26px;font-weight:600;font-family:var(--font-display);color:var(--ink);}
+.summary-tile .lab{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);margin-top:3px;}
+
+.day-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start;}
+#map{width:100%;height:560px;border-radius:var(--radius);border:1px solid var(--line-strong);}
+.timeline{display:flex;flex-direction:column;}
+.class-block{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:15px 17px;}
+.class-block .time{font-size:12px;font-weight:700;color:var(--maize-500);font-family:var(--font-mono);letter-spacing:.02em;}
+.class-block .course{font-weight:700;font-size:15.5px;margin:3px 0;font-family:var(--font-display);}
+.class-block .loc{font-size:13px;color:var(--ink-soft);}
+.transition{
+  margin:7px 0 7px 17px;padding:11px 13px;border-left:3px solid var(--line);font-size:12.5px;
+  display:flex;flex-direction:column;gap:3px; border-radius:0 8px 8px 0;
+}
+.transition.green{border-color:var(--green-line);background:var(--green-bg);color:var(--green-fg);}
+.transition.yellow{border-color:var(--yellow-line);background:var(--yellow-bg);color:var(--yellow-fg);}
+.transition.red{border-color:var(--red-line);background:var(--red-bg);color:var(--red-fg);}
+.transition .headline{font-weight:700;font-size:13px;}
+.transition .leaveby{font-size:11.5px;opacity:.85;font-family:var(--font-mono);}
+/* Campus-transfer transitions (North <-> Central) get a dashed left
+   border + bus badge so they're never visually confused with a normal
+   walking transition, even though they reuse the green/yellow/red
+   status colors. */
+.transition.campus-transfer{border-left-style:dashed;}
+.transition .bus-badge{
+  display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10.5px;
+  font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;
+  background:rgba(255,203,5,.16);color:var(--maize-300);border:1px solid rgba(255,203,5,.35);margin-right:6px;
+}
+.transition.unsupported{border-color:var(--line-strong);border-left-style:dotted;background:rgba(230,241,252,.05);color:var(--ink-soft);}
+.overlap-warning{
+  background:var(--red-bg);border:1px solid var(--red-line);color:var(--red-fg);border-radius:10px;
+  padding:13px 15px;font-size:13px;margin-bottom:16px;
+}
+
+.footnote{font-size:12px;color:var(--muted);margin-top:10px;}
+.badge-demo{background:var(--maize-500);color:var(--blue-950);font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;font-family:var(--font-mono);}
+
+/* ---------- Modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(4,12,22,.6);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;}
+.modal{background:var(--card-solid);border:1px solid var(--line-strong);border-radius:18px;max-width:480px;width:100%;padding:26px;box-shadow:var(--shadow-lift);}
+.modal h3{margin:0 0 7px;font-family:var(--font-display);font-weight:600;font-size:19px;}
+.modal p{color:var(--ink-soft);font-size:14px;margin:0 0 18px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+
+/* ---------- Responsive ---------- */
+@media (max-width:900px){
+  .hero h1{font-size:34px;}
+  .hero p.sub{font-size:16px;}
+  .hero-grid{grid-template-columns:1fr;gap:32px;}
+  .check-row{grid-template-columns:1fr;gap:6px;}
+  .builder-grid{grid-template-columns:1fr;}
+  .day-grid{grid-template-columns:1fr;}
+  .week-grid{grid-template-columns:1fr 1fr;}
+  .summary-bar{flex-wrap:wrap;}
+  .summary-tile{flex:0 0 50%;border-right:none;padding-right:10px;margin-bottom:10px;}
+  #map{height:340px;}
+  .nav-links .nav-label{display:none;}
+}
+@media (max-width:520px){
+  .week-grid{grid-template-columns:1fr;}
+  .form-2col{grid-template-columns:1fr;}
+}
+</style>
+
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav">
+    <div class="brand" id="brand-home">
+      <div class="brand-mark"><span>M</span></div>
+      GoBlue Routes
+    </div>
+    <nav class="nav-links" id="nav-links"></nav>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer class="site-footer">
+  GoBlue Routes is an independent student project and is not affiliated with, endorsed by, or sponsored by the University of Michigan.
+  Travel times are estimates only.
+</footer>
+
+<script>
+/* ==========================================================================
+   GoBlue Routes — MVP
+   ------------------------------------------------------------------------
+   This file is organized to mirror the intended production module layout
+   (see README). Sections below map to the following future file split:
+
+     /data/buildings.ts     -> BUILDINGS
+     /lib/routing.ts        -> RoutingService, getWalkingRoute()
+     /lib/schedule.ts       -> ScheduleStore (localStorage)
+     /lib/analysis.ts       -> analyzeDay(), analyzeWeek()
+     /components/*          -> render__() functions
+     /maps/*                -> MapView
+
+   No backend. No account. Schedule data lives only in the browser
+   (localStorage) unless the user clears it.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------- *
+ * CONFIG  (mirrors what would come from process.env in Next.js)
+ * ---------------------------------------------------------------------- */
+const CONFIG = {
+  // In a real deploy these come from NEXT_PUBLIC_MAPBOX_TOKEN etc.
+  MAPBOX_TOKEN: null,
+
+  // --------------------------------------------------------------------
+  // ROUTING_PROVIDER_KEY
+  // --------------------------------------------------------------------
+  // Walking/pedestrian routing is provided by two chained providers (see
+  // ROUTING_CONFIG + getWalkingRoute() below):
+  //   1. A free, no-key OSRM instance that runs a real foot/pedestrian
+  //      profile (routing.openstreetmap.de). Tried first, always.
+  //   2. openrouteservice (openrouteservice.org), used ONLY if #1 fails
+  //      or is unreachable, AND a key is set here.
+  // If both fail, the app falls back to an estimated straight-line
+  // calculation and labels it clearly as an estimate — it never shows a
+  // straight line as if it were a real route.
+  //
+  // To enable the openrouteservice fallback:
+  //   1. Sign up for a free key: https://openrouteservice.org/dev/#/signup
+  //   2. Paste it below, e.g.  ROUTING_PROVIDER_KEY: "5b3ce3597851110001cf6248..."
+  //   3. Do NOT commit a real key to a public repo. In production, proxy
+  //      the request through your own backend (or an env var injected at
+  //      build/deploy time) instead of shipping the key in frontend
+  //      source that anyone can read in devtools.
+  ROUTING_PROVIDER_KEY: null,
+
+  OCR_API_KEY: null, // e.g. an AI/OCR provider for screenshot parsing
+};
+
+/* ---------------------------------------------------------------------- *
+ * DATA: /data/buildings.js
+ * Seed data for University of Michigan, Ann Arbor.
+ * Coordinates are best-effort approximations for demo purposes and are
+ * marked verifiedCoords:false where they have not been checked against
+ * an authoritative source. Replace with verified data before relying on
+ * this for real navigation.
+ * ---------------------------------------------------------------------- */
+const BUILDINGS = {
+  "A&AB": { name:"Art & Architecture Building", aliases:["Art and Architecture"], campus:"North Campus", lat:42.290089, lng:-83.715635, verifiedCoords:false },
+  "AH": { name:"Angell Hall", aliases:["LSA Building"], campus:"Central Campus", lat:42.27991, lng:-83.739441, verifiedCoords:false },
+  "AL": { name:"Walter E. Lay Automotive Lab", aliases:["Automotive Lab"], campus:"North Campus", lat:42.294888, lng:-83.717643, verifiedCoords:false },
+  "ALH": { name:"Alice Lloyd Hall", aliases:["Alice Lloyd"], campus:"The Hill", lat:42.282233, lng:-83.726756, verifiedCoords:false },
+  "ARGUS2": { name:"Argus Building II, Television Center, 408 S. Fourth Street", aliases:[], campus:"Ann Arbor, Off Campus", lat:42.270806, lng:-83.752087, verifiedCoords:false },
+  "ARGUS3": { name:"Argus Building III, 416 S. Fourth Street", aliases:[], campus:"Ann Arbor, Off Campus", lat:42.274899, lng:-83.751566, verifiedCoords:false },
+  "BAM HALL": { name:"Blanch Anderson Moore Hall, School of Music", aliases:["School of Music", "Moore Building of Music"], campus:"North Campus", lat:42.294396, lng:-83.714519, verifiedCoords:false },
+  "BEYST": { name:"Bob and Betty Beyster Building (formerly CSE)", aliases:["CSE", "BBB", "Beyster", "Computer Science Building"], campus:"North Campus", lat:42.293712, lng:-83.713927, verifiedCoords:false },
+  "BIOL STAT": { name:"Biological Station", aliases:[], campus:"Pellston, MI", lat:45.564962, lng:-84.791298, verifiedCoords:false },
+  "BLAU": { name:"Jeff T Blau Hall", aliases:[], campus:"Central Campus", lat:42.280392, lng:-83.742319, verifiedCoords:false },
+  "BMT": { name:"Burton Memorial Tower", aliases:["Burton Tower"], campus:"Central Campus", lat:42.279399, lng:-83.7398, verifiedCoords:false },
+  "BOT GARD": { name:"Matthaei Botanical Gardens, Dixboro Road", aliases:[], campus:"Ann Arbor, Off Campus", lat:42.270503, lng:-83.752754, verifiedCoords:false },
+  "BSB": { name:"Biological Science Building", aliases:["Biological Sciences Building"], campus:"Central Campus", lat:42.277286, lng:-83.738602, verifiedCoords:false },
+  "BSRB": { name:"Biomedical Science Research Building", aliases:[], campus:"Medical Campus", lat:42.28333, lng:-83.733769, verifiedCoords:false },
+  "BURS": { name:"Bursley Hall", aliases:["Bursley"], campus:"North Campus", lat:42.290828, lng:-83.714097, verifiedCoords:false },
+  "BUS": { name:"Business Administration", aliases:[], campus:"Central Campus", lat:42.275107, lng:-83.740614, verifiedCoords:false },
+  "CAMP DAVIS": { name:"Camp Davis", aliases:[], campus:"Jackson Hole, WY", lat:43.482318, lng:-110.757705, verifiedCoords:false },
+  "CCCB": { name:"Central Campus Classroom Bldg", aliases:["Central Campus Classroom Building"], campus:"Central Campus", lat:42.275009, lng:-83.740927, verifiedCoords:false },
+  "CHEM": { name:"Chemistry Building", aliases:["Chemistry"], campus:"Central Campus", lat:42.277797, lng:-83.743226, verifiedCoords:false },
+  "CHRYS": { name:"Chrysler Center", aliases:["Chrysler", "CoE Continuing Ed"], campus:"North Campus", lat:42.291385, lng:-83.7176, verifiedCoords:false },
+  "COMM PARK": { name:"Commerce Park", aliases:[], campus:"Dearborn, MI", lat:42.327743, lng:-83.17607, verifiedCoords:false },
+  "COOL": { name:"Cooley Building", aliases:["Cooley"], campus:"North Campus", lat:42.292465, lng:-83.714819, verifiedCoords:false },
+  "COUZENS": { name:"Couzens Hall", aliases:["Couzens"], campus:"The Hill", lat:42.28007, lng:-83.727127, verifiedCoords:false },
+  "CPH": { name:"Children's Psychiatric Hospital", aliases:[], campus:"Medical Campus", lat:42.286157, lng:-83.733623, verifiedCoords:false },
+  "CRISLER": { name:"Crisler Center", aliases:["Crisler Arena"], campus:"Ross Athletic Campus", lat:42.263582, lng:-83.747992, verifiedCoords:false },
+  "CCSB": { name:"Campus Safety Services Building, 1239 Kipke Dr.", aliases:[], campus:"Ross Athletic Campus", lat:42.262535, lng:-83.749342, verifiedCoords:false },
+  "CSRB": { name:"Climate and Space Research Building (formerly Space Research Building)", aliases:["Space Research Building", "Climate and Space"], campus:"North Campus", lat:42.29078, lng:-83.715019, verifiedCoords:false },
+  "DANA": { name:"Dana Building (School of Environment & Sustainability)", aliases:["School of Environment & Sustainability", "School for Environment and Sustainability", "SEAS"], campus:"Central Campus", lat:42.276612, lng:-83.739551, verifiedCoords:false },
+  "DANCE": { name:"Dance Building", aliases:[], campus:"North Campus", lat:42.294729, lng:-83.714512, verifiedCoords:false },
+  "DC": { name:"Duderstadt Center", aliases:["Duderstadt", "Duderstadt Library", "Dude", "Art Architecture and Engineering Library"], campus:"North Campus", lat:42.294338, lng:-83.715509, verifiedCoords:false },
+  "DENT": { name:"School of Dentistry", aliases:["Dentistry"], campus:"Central Campus", lat:42.277718, lng:-83.738501, verifiedCoords:false },
+  "DOW": { name:"Dow Engineering Building", aliases:["Dow Engineering"], campus:"North Campus", lat:42.293061, lng:-83.71575, verifiedCoords:false },
+  "E-BUS": { name:"Executive Education", aliases:["Ross Exec Ed"], campus:"Central Campus", lat:42.279648, lng:-83.741829, verifiedCoords:false },
+  "EECS": { name:"Electrical Engineering and Computer Science Building", aliases:["EE", "Electrical Engineering", "Computer Science and Engineering"], campus:"North Campus", lat:42.295371, lng:-83.716701, verifiedCoords:false },
+  "EH": { name:"East Hall", aliases:["Math", "Statistics", "Physics Astronomy"], campus:"Central Campus", lat:42.274987, lng:-83.740542, verifiedCoords:false },
+  "EQ": { name:"East Quadrangle", aliases:["East Quad"], campus:"Central Campus", lat:42.275802, lng:-83.741075, verifiedCoords:false },
+  "ERB1": { name:"Engineering Research Building 1", aliases:[], campus:"North Campus", lat:42.292691, lng:-83.716373, verifiedCoords:false },
+  "ERB2": { name:"Engineering Research Building 2", aliases:[], campus:"North Campus", lat:42.292714, lng:-83.718605, verifiedCoords:false },
+  "EWRE": { name:"Environmental & Water Resources Engineering Building", aliases:["Environmental and Water Resources Engineering"], campus:"North Campus", lat:42.294736, lng:-83.717128, verifiedCoords:false },
+  "FA CAMP": { name:"Fresh Air Camp, Pinckney", aliases:[], campus:"Pinckney, MI", lat:42.452712, lng:-83.934799, verifiedCoords:false },
+  "FMCRB": { name:"Ford Motor Company Robotics Building", aliases:["Ford Robotics"], campus:"North Campus", lat:42.29326, lng:-83.715729, verifiedCoords:false },
+  "FORD LIB": { name:"Ford Library", aliases:[], campus:"North Campus", lat:42.293984, lng:-83.71374, verifiedCoords:false },
+  "FXB": { name:"Francois-Xavier Bagnoud Building", aliases:["Aero", "Aerospace Engineering", "FXB"], campus:"North Campus", lat:42.292471, lng:-83.715599, verifiedCoords:false },
+  "GFL": { name:"Gorguze Family Laboratory (formerly EPB)", aliases:["EPB", "Gorguze"], campus:"North Campus", lat:42.293538, lng:-83.715541, verifiedCoords:false },
+  "GGBL": { name:"G. G. Brown Laboratory", aliases:["G.G. Brown", "GG Brown"], campus:"North Campus", lat:42.292119, lng:-83.714847, verifiedCoords:false },
+  "GLIBN": { name:"Harlan Hatcher Graduate Library, North", aliases:["Hatcher Graduate Library", "Grad Library North"], campus:"Central Campus", lat:42.27836, lng:-83.739809, verifiedCoords:false },
+  "HH": { name:"Haven Hall", aliases:[], campus:"Central Campus", lat:42.280284, lng:-83.739645, verifiedCoords:false },
+  "HFRWC": { name:"Hadley Family Recreation and Well-being Center", aliases:[], campus:"Central Campus", lat:42.279377, lng:-83.740855, verifiedCoords:false },
+  "HUTCH": { name:"Hutchins Hall", aliases:["Law School"], campus:"Central Campus", lat:42.277079, lng:-83.740645, verifiedCoords:false },
+  "IM POOL": { name:"Intramural Building", aliases:[], campus:"Ross Athletic Campus", lat:42.266215, lng:-83.747927, verifiedCoords:false },
+  "IOE": { name:"Industrial and Operations Engineering Building", aliases:["Industrial and Operations Engineering"], campus:"North Campus", lat:42.293251, lng:-83.716584, verifiedCoords:false },
+  "ISR": { name:"Institute for Social Research", aliases:[], campus:"Central Campus", lat:42.279255, lng:-83.739209, verifiedCoords:false },
+  "JEFFRIES": { name:"Jeffries Hall, Law School", aliases:["Law School", "Jeffries Hall"], campus:"Central Campus", lat:42.277715, lng:-83.738684, verifiedCoords:false },
+  "K-BUS": { name:"Kresge Library", aliases:["Ross Kresge"], campus:"Central Campus", lat:42.277399, lng:-83.742552, verifiedCoords:false },
+  "KEC": { name:"Kellogg Eye Center", aliases:[], campus:"Medical Campus", lat:42.285814, lng:-83.730828, verifiedCoords:false },
+  "KEENE THTR EQ": { name:"Keene Theater, Residential College, East Quadrangle", aliases:[], campus:"Central Campus", lat:42.277382, lng:-83.740692, verifiedCoords:false },
+  "KELL": { name:"Kellogg Foundation Institute (connected to School of Dentistry)", aliases:["connected to School of Dentistry"], campus:"Central Campus", lat:42.27523, lng:-83.738877, verifiedCoords:false },
+  "KELSEY": { name:"Kelsey Museum of Archaeology", aliases:["Kelsey Museum"], campus:"Central Campus", lat:42.278773, lng:-83.742026, verifiedCoords:false },
+  "KHRI": { name:"Kresge Hearing Research Institute", aliases:[], campus:"Medical Campus", lat:42.283914, lng:-83.730384, verifiedCoords:false },
+  "LANE": { name:"Lane Hall", aliases:[], campus:"Central Campus", lat:42.277942, lng:-83.741444, verifiedCoords:false },
+  "LBME": { name:"Lurie Biomedical Engineering Building", aliases:["Lurie Biomedical Engineering"], campus:"North Campus", lat:42.29296, lng:-83.713496, verifiedCoords:false },
+  "LCSIB": { name:"Leinweber Computer Science and Information Building", aliases:["Leinweber", "Computer Science Building"], campus:"North Campus", lat:42.291642, lng:-83.717911, verifiedCoords:false },
+  "LEAG": { name:"Michigan League", aliases:[], campus:"Central Campus", lat:42.275256, lng:-83.73888, verifiedCoords:false },
+  "LEC": { name:"Lurie Engineering Center", aliases:[], campus:"North Campus", lat:42.293756, lng:-83.716064, verifiedCoords:false },
+  "LLIB": { name:"Law Library", aliases:[], campus:"Central Campus", lat:42.277834, lng:-83.739216, verifiedCoords:false },
+  "LORCH": { name:"Lorch Hall", aliases:["Lorch"], campus:"Central Campus", lat:42.275369, lng:-83.740848, verifiedCoords:false },
+  "LSA": { name:"Literature, Science, and the Arts Building", aliases:[], campus:"Central Campus", lat:42.279566, lng:-83.740617, verifiedCoords:false },
+  "LSI": { name:"Life Sciences Institute", aliases:[], campus:"Central Campus", lat:42.274991, lng:-83.740428, verifiedCoords:false },
+  "MARKLEY": { name:"Mary Markley Hall", aliases:["Mary Markley"], campus:"The Hill", lat:42.283179, lng:-83.727187, verifiedCoords:false },
+  "MAX KADE": { name:"Max Kade House, 627 Oxford Street", aliases:[], campus:"Ann Arbor, Off Campus", lat:42.27177, lng:-83.748593, verifiedCoords:false },
+  "MH": { name:"Mason Hall", aliases:["Mason"], campus:"Central Campus", lat:42.274804, lng:-83.743562, verifiedCoords:false },
+  "MGMC": { name:"Marygrove Madame Cadillac Building", aliases:[], campus:"Detroit, MI", lat:42.336535, lng:-83.043803, verifiedCoords:false },
+  "MHRI": { name:"Mental Health Research Institute", aliases:[], campus:"Medical Campus", lat:42.283446, lng:-83.734449, verifiedCoords:false },
+  "MLB": { name:"Modern Languages Building", aliases:["Modern Languages", "Language Lab"], campus:"Central Campus", lat:42.279435, lng:-83.742509, verifiedCoords:false },
+  "MONREOCTY HD": { name:"Monroe County Health Department", aliases:[], campus:"Monroe, MI", lat:41.922128, lng:-83.398949, verifiedCoords:false },
+  "MOSHER": { name:"Mosher Jordan Hall", aliases:["Mosher Jordan"], campus:"The Hill", lat:42.280648, lng:-83.731214, verifiedCoords:false },
+  "MOTT": { name:"C. S. Mott Children's Hospital", aliases:["Mott Children's Hospital", "C.S. Mott"], campus:"Medical Campus", lat:42.284107, lng:-83.731394, verifiedCoords:false },
+  "MSC1": { name:"Medical Science, Building I", aliases:["Medical Science I"], campus:"Medical Campus", lat:42.282229, lng:-83.732122, verifiedCoords:false },
+  "MSC2": { name:"Medical Science, Building II", aliases:["Medical Science II"], campus:"Medical Campus", lat:42.286292, lng:-83.731872, verifiedCoords:false },
+  "MSRB3": { name:"Medical Science Research, Building III", aliases:[], campus:"Medical Campus", lat:42.282097, lng:-83.732509, verifiedCoords:false },
+  "NAME": { name:"Naval Architecture and Marine Engineering Building", aliases:["Naval Architecture", "Marine Engineering"], campus:"North Campus", lat:42.293589, lng:-83.713768, verifiedCoords:false },
+  "NCRB": { name:"North Campus Recreation Building", aliases:["North Campus Rec Building"], campus:"North Campus", lat:42.291611, lng:-83.717979, verifiedCoords:false },
+  "NCRC": { name:"North Campus Research Complex", aliases:[], campus:"North Campus", lat:42.294576, lng:-83.714633, verifiedCoords:false },
+  "NEAL": { name:"Homer A. Neal Laboratory", aliases:["Neal Lab"], campus:"Central Campus", lat:42.276507, lng:-83.738564, verifiedCoords:false },
+  "NIB": { name:"300 North Ingalls Building", aliases:[], campus:"Medical Campus", lat:42.283952, lng:-83.733742, verifiedCoords:false },
+  "400NI": { name:"400 North Ingalls Building", aliases:[], campus:"Medical Campus", lat:42.28279, lng:-83.730342, verifiedCoords:false },
+  "426NI": { name:"426 North Ingalls Building", aliases:[], campus:"Medical Campus", lat:42.283167, lng:-83.732171, verifiedCoords:false },
+  "NORTHVILLEPH": { name:"Northville State Hospital", aliases:[], campus:"Northville, MI", lat:42.427008, lng:-83.484337, verifiedCoords:false },
+  "NQ": { name:"North Quad", aliases:["North Quadrangle"], campus:"Central Campus", lat:42.274946, lng:-83.73877, verifiedCoords:false },
+  "NUB": { name:"1100 North University Building", aliases:["1100 North University"], campus:"Central Campus", lat:42.278836, lng:-83.74095, verifiedCoords:false },
+  "OBSRV": { name:"Observatory Hall", aliases:["Observatory"], campus:"The Hill", lat:42.281389, lng:-83.728856, verifiedCoords:false },
+  "PALM": { name:"Palmer Commons", aliases:[], campus:"Central Campus", lat:42.280151, lng:-83.742506, verifiedCoords:false },
+  "PHARM": { name:"Pharmacy Building (New)", aliases:[], campus:"Medical Campus", lat:42.285862, lng:-83.734573, verifiedCoords:false },
+  "PHOENIXLAB": { name:"Phoenix Memorial Laboratory", aliases:["Phoenix Lab", "Phoenix Memorial"], campus:"North Campus", lat:42.292004, lng:-83.716113, verifiedCoords:false },
+  "PIER": { name:"Pierpont Commons", aliases:["Pierpont", "North Campus Commons"], campus:"North Campus", lat:42.29285, lng:-83.713864, verifiedCoords:false },
+  "POWER CTR": { name:"Power Center for the Performing Arts", aliases:["Power Center"], campus:"Central Campus", lat:42.276846, lng:-83.741582, verifiedCoords:false },
+  "RACK": { name:"Horace H. Rackham, School of Graduate Studies", aliases:["Rackham", "Rackham Graduate School"], campus:"Central Campus", lat:42.275474, lng:-83.743372, verifiedCoords:false },
+  "RAND": { name:"Randall Laboratory", aliases:["Randall Lab", "Physics"], campus:"Central Campus", lat:42.27502, lng:-83.741987, verifiedCoords:false },
+  "R-BUS": { name:"Ross School of Business Building", aliases:["Ross School of Business", "Ross", "Business School"], campus:"Central Campus", lat:42.277177, lng:-83.74243, verifiedCoords:false },
+  "REVELLI": { name:"William D. Revelli Hall", aliases:[], campus:"Ross Athletic Campus", lat:42.263296, lng:-83.750765, verifiedCoords:false },
+  "ROSS AC": { name:"Stephen M. Ross Academic Center", aliases:[], campus:"Ross Athletic Campus", lat:42.263892, lng:-83.749359, verifiedCoords:false },
+  "SCHEM": { name:"Glenn E. Schembechler Hall", aliases:[], campus:"Ross Athletic Campus", lat:42.265773, lng:-83.74748, verifiedCoords:false },
+  "SEB": { name:"Marsal Family School of Education Building", aliases:["School of Education", "Marsal"], campus:"Central Campus", lat:42.277989, lng:-83.741853, verifiedCoords:false },
+  "SHAPIRO": { name:"Shapiro Undergraduate Library", aliases:["UgLi", "Shapiro Library", "Undergrad Library"], campus:"Central Campus", lat:42.27969, lng:-83.743269, verifiedCoords:false },
+  "SKB": { name:"School of Kinesiology Building (formerly the Kraus Building)", aliases:["the Kraus Building"], campus:"Central Campus", lat:42.275918, lng:-83.741178, verifiedCoords:false },
+  "SM": { name:"Earl V. Moore Building, School of Music", aliases:["School of Music", "Moore Building"], campus:"North Campus", lat:42.291507, lng:-83.713734, verifiedCoords:false },
+  "SPH1": { name:"Henry Vaughan Building, School of Public Health I", aliases:["Public Health I", "School of Public Health"], campus:"The Hill", lat:42.278181, lng:-83.728785, verifiedCoords:false },
+  "SPH2": { name:"Thomas Francis, Jr Building, School of Public Health II", aliases:["Public Health II"], campus:"The Hill", lat:42.27979, lng:-83.73053, verifiedCoords:false },
+  "SSWB": { name:"School of Social Work Building", aliases:["School of Social Work"], campus:"Central Campus", lat:42.2756, lng:-83.741987, verifiedCoords:false },
+  "STAMPS": { name:"Stamps Auditorium", aliases:["Art and Design"], campus:"North Campus", lat:42.289839, lng:-83.713351, verifiedCoords:false },
+  "STB": { name:"202 South Thayer Building", aliases:[], campus:"Central Campus", lat:42.279981, lng:-83.740962, verifiedCoords:false },
+  "STJOSEPH HOSP": { name:"St. Joseph Mercy Hospital", aliases:[], campus:"Ann Arbor, Off Campus", lat:42.273856, lng:-83.751948, verifiedCoords:false },
+  "STOCKWELL": { name:"Stockwell Hall", aliases:["Stockwell"], campus:"The Hill", lat:42.278814, lng:-83.731183, verifiedCoords:false },
+  "STRNS": { name:"Sterns Building", aliases:["Sterns"], campus:"North Campus", lat:42.29224, lng:-83.714495, verifiedCoords:false },
+  "T&TB": { name:"Track & Tennis Building", aliases:[], campus:"Ross Athletic Campus", lat:42.258625, lng:-83.744704, verifiedCoords:false },
+  "TAP": { name:"Tappan Hall", aliases:["Tappan"], campus:"Central Campus", lat:42.280331, lng:-83.741586, verifiedCoords:false },
+  "THSL": { name:"Taubman Health Science Library", aliases:[], campus:"Medical Campus", lat:42.28554, lng:-83.73438, verifiedCoords:false },
+  "TISCH": { name:"Tisch Hall", aliases:[], campus:"Central Campus", lat:42.277547, lng:-83.738404, verifiedCoords:false },
+  "TMC": { name:"Trotter Multicultural Center, 428 S. State St", aliases:["Trotter Center"], campus:"Central Campus", lat:42.276911, lng:-83.738484, verifiedCoords:false },
+  "UM HOSP": { name:"University Hospital", aliases:["U-M Hospital"], campus:"Medical Campus", lat:42.286061, lng:-83.734594, verifiedCoords:false },
+  "UMMA": { name:"University of Michigan Museum of Art (Alumni Memorial Hall)", aliases:["Alumni Memorial Hall", "Museum of Art"], campus:"Central Campus", lat:42.276214, lng:-83.741511, verifiedCoords:false },
+  "UNION": { name:"Michigan Union", aliases:[], campus:"Central Campus", lat:42.279931, lng:-83.742346, verifiedCoords:false },
+  "USB": { name:"Undergraduate Science Building", aliases:["Undergrad Science Building"], campus:"Central Campus", lat:42.277486, lng:-83.743154, verifiedCoords:false },
+  "UTOWER": { name:"University Towers, 1225 S. University", aliases:["University Towers"], campus:"Central Campus", lat:42.278942, lng:-83.738455, verifiedCoords:false },
+  "VETERANSHOSP": { name:"Veterans Administration Hospital", aliases:[], campus:"Ann Arbor, Off Campus", lat:42.272474, lng:-83.75188, verifiedCoords:false },
+  "WASHCTY HD": { name:"Washtenaw County Health Department", aliases:[], campus:"Ann Arbor, Off Campus", lat:42.274587, lng:-83.749896, verifiedCoords:false },
+  "W-BUS": { name:"Wyly Hall", aliases:["Ross Wyly"], campus:"Central Campus", lat:42.279807, lng:-83.742127, verifiedCoords:false },
+  "WDC": { name:"Charles R. Walgreen, Jr. Drama Center", aliases:["Walgreen Drama Center"], campus:"North Campus", lat:42.294229, lng:-83.717787, verifiedCoords:false },
+  "WEILL": { name:"Joan and Sanford Weill Hall", aliases:["Ford School", "Weill Hall"], campus:"Central Campus", lat:42.277566, lng:-83.741278, verifiedCoords:false },
+  "WEIS": { name:"Weiser Hall", aliases:[], campus:"Central Campus", lat:42.27583, lng:-83.742384, verifiedCoords:false },
+  "WH": { name:"West Hall", aliases:["Physics"], campus:"Central Campus", lat:42.278461, lng:-83.743176, verifiedCoords:false },
+  "WOMEN'S HOSP": { name:"Women's Hospital", aliases:[], campus:"Medical Campus", lat:42.283342, lng:-83.734936, verifiedCoords:false },
+  "WQ": { name:"West Quad", aliases:["West Quadrangle"], campus:"Central Campus", lat:42.277473, lng:-83.741444, verifiedCoords:false },
+};
+
+function searchBuildings(query){
+  const q = (query||"").trim().toLowerCase();
+  if(!q) return [];
+  return Object.entries(BUILDINGS)
+    .filter(([code,b])=>{
+      return code.toLowerCase().includes(q) ||
+             b.name.toLowerCase().includes(q) ||
+             b.aliases.some(a=>a.toLowerCase().includes(q));
+    })
+    .slice(0,8)
+    .map(([code,b])=>({code,...b}));
+}
+
+/* ---------------------------------------------------------------------- *
+ * LIB: /lib/routing.js
+ * Real pedestrian routing, provider-swappable behind one async signature:
+ *   getWalkingRoute(origin, destination) ->
+ *     Promise<{distanceMeters, durationMin, geometry, estimated, unavailable}>
+ *
+ * Provider chain (each only tried if the previous one fails):
+ *   1. OSRM_FOOT   — routing.openstreetmap.de/routed-foot. This is NOT the
+ *      router.project-osrm.org demo server (that public instance is
+ *      hardcoded to a driving profile no matter what profile you ask
+ *      for). routing.openstreetmap.de is a separate, FOSSGIS-run public
+ *      OSRM deployment that actually runs a foot/pedestrian profile, is
+ *      free, and needs no API key. Suitable for light/demo traffic only
+ *      (see https://routing.openstreetmap.de/about.html) — self-host
+ *      OSRM with the foot profile for production load.
+ *   2. ORS_FOOT    — openrouteservice's foot-walking profile. Only used
+ *      if OSRM_FOOT fails/errors AND CONFIG.ROUTING_PROVIDER_KEY is set.
+ *   3. ESTIMATED   — the old straight-line-plus-inefficiency-factor
+ *      estimate, used only if both real providers fail. Always returned
+ *      with estimated:true so callers can label it honestly instead of
+ *      silently drawing it as a real route.
+ * ---------------------------------------------------------------------- */
+const WALK_SPEED_MPS = 1.34; // ~3 mph average adult walking pace, used only by the estimated fallback
+
+const ROUTING_CONFIG = {
+  OSRM_FOOT_URL: "https://routing.openstreetmap.de/routed-foot/route/v1/foot",
+  ORS_FOOT_URL: "https://api.openrouteservice.org/v2/directions/foot-walking/geojson",
+};
+
+/* ---------------------------------------------------------------------- *
+ * CAMPUS TRANSFER CONFIG
+ * North Campus <-> Central Campus is a Blue Bus ride, not a walk — see
+ * classifyTransition() below. These are the only two numbers to touch to
+ * retune the estimate; nothing else in the app hardcodes 15/20.
+ * ---------------------------------------------------------------------- */
+const CAMPUS_TRANSFER_MIN = 15;
+const CAMPUS_TRANSFER_MAX = 20;
+
+// origin/destination -> resolved route. Avoids re-fetching the same
+// building-to-building segment every time a view re-renders.
+const routeCache = new Map();
+function routeCacheKey(a,b){ return `${a.lat},${a.lng}|${b.lat},${b.lng}`; }
+
+function haversineMeters(a,b){
+  const R=6371000;
+  const toRad = d=>d*Math.PI/180;
+  const dLat = toRad(b.lat-a.lat), dLng = toRad(b.lng-a.lng);
+  const s = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+
+async function fetchOSRMFootRoute(origin, destination){
+  const url = `${ROUTING_CONFIG.OSRM_FOOT_URL}/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("OSRM foot request failed: "+res.status);
+  const data = await res.json();
+  if(data.code !== "Ok" || !data.routes || !data.routes.length) throw new Error("OSRM foot: no route found");
+  const r = data.routes[0];
+  return {
+    distanceMeters: Math.round(r.distance),
+    durationMin: Math.max(1, Math.round(r.duration/60)),
+    geometry: r.geometry.coordinates.map(([lng,lat])=>[lat,lng]), // GeoJSON is [lng,lat]; Leaflet wants [lat,lng]
+    estimated: false,
+    unavailable: false,
+    provider: "osrm-foot",
+  };
+}
+
+async function fetchORSFootRoute(origin, destination){
+  if(!CONFIG.ROUTING_PROVIDER_KEY) throw new Error("openrouteservice: no API key configured");
+  const res = await fetch(ROUTING_CONFIG.ORS_FOOT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": CONFIG.ROUTING_PROVIDER_KEY,
+    },
+    body: JSON.stringify({ coordinates: [[origin.lng,origin.lat],[destination.lng,destination.lat]] }),
+  });
+  if(!res.ok) throw new Error("openrouteservice request failed: "+res.status);
+  const data = await res.json();
+  const feature = data.features && data.features[0];
+  if(!feature) throw new Error("openrouteservice: no route found");
+  const summary = feature.properties.summary;
+  return {
+    distanceMeters: Math.round(summary.distance),
+    durationMin: Math.max(1, Math.round(summary.duration/60)),
+    geometry: feature.geometry.coordinates.map(([lng,lat])=>[lat,lng]),
+    estimated: false,
+    unavailable: false,
+    provider: "ors-foot",
+  };
+}
+
+// Fallback ONLY — reached if every real pedestrian routing provider
+// fails (offline, rate-limited, no path found, etc). Assumes a straight
+// line plus a small path-inefficiency factor. Always tagged
+// estimated:true so the UI shows "Estimated route — walking directions
+// unavailable." instead of quietly presenting it as a real route.
+function estimateStraightLineRoute(origin, destination){
+  const straight = haversineMeters(origin,destination);
+  const PATH_INEFFICIENCY = 1.3;
+  const distanceMeters = straight*PATH_INEFFICIENCY;
+  const durationMin = Math.max(1, Math.round(distanceMeters/WALK_SPEED_MPS/60));
+  return {
+    distanceMeters: Math.round(distanceMeters),
+    durationMin,
+    geometry: [[origin.lat,origin.lng],[destination.lat,destination.lng]],
+    estimated: true,
+    unavailable: false,
+  };
+}
+
+async function getWalkingRoute(origin, destination){
+  if(!origin || !destination){
+    return { distanceMeters:null, durationMin:null, geometry:[], estimated:true, unavailable:true };
+  }
+  if(origin.lat===destination.lat && origin.lng===destination.lng){
+    return { distanceMeters:0, durationMin:0, geometry:[[origin.lat,origin.lng]], estimated:false, unavailable:false, provider:"same-building" };
+  }
+  const key = routeCacheKey(origin,destination);
+  if(routeCache.has(key)) return routeCache.get(key);
+
+  let route;
+  try{
+    route = await fetchOSRMFootRoute(origin, destination);
+  }catch(errOSRM){
+    try{
+      route = await fetchORSFootRoute(origin, destination);
+    }catch(errORS){
+      route = estimateStraightLineRoute(origin, destination);
+    }
+  }
+  routeCache.set(key, route);
+  return route;
+}
+
+/* ---------------------------------------------------------------------- *
+ * LIB: /lib/transitions.js
+ * Classifies a building-to-building leg BEFORE any routing happens, so
+ * the rest of the app (route calc, map, timeline, buffers, "Will I make
+ * it?") all branch on one shared `type` instead of re-deriving campus
+ * logic in five places. Source of truth for campus is building.campus —
+ * no separate hardcoded North/Central list.
+ *
+ *   "walking"         same campus on both ends -> real pedestrian route
+ *   "campus_transfer" North Campus <-> Central Campus -> Blue Bus estimate
+ *   "unsupported"     any other cross-campus combo (Medical, The Hill,
+ *                      Ross Athletic Campus, off-campus, ...) -> flagged,
+ *                      never silently treated as a normal walk
+ * ---------------------------------------------------------------------- */
+const NORTH_CAMPUS = "North Campus";
+const CENTRAL_CAMPUS = "Central Campus";
+
+function classifyTransition(originB, destB){
+  const campusA = originB.campus, campusB = destB.campus;
+  if(campusA === campusB){
+    return { type:"walking", campusA, campusB };
+  }
+  if(campusA === NORTH_CAMPUS && campusB === CENTRAL_CAMPUS){
+    return { type:"campus_transfer", campusA, campusB, direction:"North → Central" };
+  }
+  if(campusA === CENTRAL_CAMPUS && campusB === NORTH_CAMPUS){
+    return { type:"campus_transfer", campusA, campusB, direction:"Central → North" };
+  }
+  return { type:"unsupported", campusA, campusB };
+}
+
+// Synchronous — no network call. The campus-transfer estimate is a fixed
+// range (CAMPUS_TRANSFER_MIN–MAX), not a per-building calculation, so
+// there's nothing to fetch or cache. The conservative MAX value is what
+// powers "Will I make it?"/buffer math; MIN is shown only as the low end
+// of the displayed range.
+function campusTransferSegment(direction){
+  return {
+    type:"campus_transfer",
+    direction,
+    minDurationMin: CAMPUS_TRANSFER_MIN,
+    maxDurationMin: CAMPUS_TRANSFER_MAX,
+    durationMin: CAMPUS_TRANSFER_MAX,
+    estimated: true,
+    geometry: null,
+  };
+}
+
+/* ---------------------------------------------------------------------- *
+ * LIB: /lib/schedule.js  — localStorage persistence
+ * ---------------------------------------------------------------------- */
+const STORAGE_KEY = "goblue_routes_schedule_v1";
+const ScheduleStore = {
+  load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  },
+  save(classes){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(classes)); }catch(e){}
+  },
+  clear(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} },
+};
+
+const DAY_ORDER = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const DAY_LABEL = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
+
+function uid(){ return "c_"+Math.random().toString(36).slice(2,10); }
+
+function toMinutes(hhmm){
+  const [h,m] = hhmm.split(":").map(Number);
+  return h*60+m;
+}
+function fmtTime(hhmm){
+  let [h,m] = hhmm.split(":").map(Number);
+  const ampm = h>=12 ? "PM":"AM";
+  h = h%12; if(h===0) h=12;
+  return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
+}
+function fmtMinutesAsClock(mins){
+  mins = ((mins%1440)+1440)%1440;
+  const h = Math.floor(mins/60), m = mins%60;
+  return fmtTime(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
+}
+
+// Signature component — see .margin-meter in CSS. Renders "needed"
+// minutes as a filled bar (colored by status) against a fixed scale,
+// with a tick marking exactly where "available" falls. When needed
+// time runs past available time, the fill visibly overshoots the tick
+// instead of just turning red — the overrun is literally the extra bar.
+const MARGIN_METER_SCALE_MIN = 40;
+function renderMarginMeter(available, needed, status){
+  const scale = MARGIN_METER_SCALE_MIN;
+  const fillPct = Math.max(3, Math.min(112, (needed/scale)*100));
+  const markPct = Math.max(0, Math.min(100, (available/scale)*100));
+  return `<div class="margin-meter">
+    <div class="fill ${status}" style="width:${Math.min(fillPct,100)}%"></div>
+    <div class="avail-mark" style="left:calc(${markPct}% - 1px)"></div>
+  </div>
+  <div class="margin-meter-label"><span>${needed} min needed</span><span>${available} min available</span></div>`;
+}
+
+/* ---------------------------------------------------------------------- *
+ * LIB: /lib/analysis.js
+ * ---------------------------------------------------------------------- */
+function classesForDay(classes, day){
+  return classes
+    .filter(c=>c.days.includes(day))
+    .slice()
+    .sort((a,b)=>toMinutes(a.start)-toMinutes(b.start));
+}
+
+function findOverlaps(dayClasses){
+  const overlaps = [];
+  for(let i=0;i<dayClasses.length-1;i++){
+    const a=dayClasses[i], b=dayClasses[i+1];
+    if(toMinutes(b.start) < toMinutes(a.end)){
+      overlaps.push([a,b]);
+    }
+  }
+  return overlaps;
+}
+
+// Synchronous: reads whatever routes are already in routeCache and marks
+// anything not yet fetched as `loading`. This lets the schedule/timeline
+// render immediately without waiting on the network — routing results
+// stream in afterwards via fetchMissingRoutesForDay() + a re-render.
+function analyzeDay(classes, day){
+  const dayClasses = classesForDay(classes, day);
+  const overlaps = findOverlaps(dayClasses);
+  const overlappingIds = new Set(overlaps.flatMap(([a,b])=>[a.id,b.id]));
+
+  const transitions = [];
+  for(let i=0;i<dayClasses.length-1;i++){
+    const prev = dayClasses[i], next = dayClasses[i+1];
+    if(overlappingIds.has(prev.id) || overlappingIds.has(next.id)){
+      transitions.push({ prev, next, skipped:true, reason:"overlap" });
+      continue;
+    }
+    const originB = BUILDINGS[prev.building];
+    const destB = BUILDINGS[next.building];
+    if(!originB || !destB){
+      const missingCode = !originB ? prev.building : next.building;
+      const missingRec = BUILDINGS[missingCode];
+      // In the catalog but genuinely missing lat/lng vs. not in the catalog at all.
+      const reason = (missingRec && (missingRec.lat==null || missingRec.lng==null)) ? "no_coords" : "unknown_building";
+      transitions.push({ prev, next, skipped:true, reason });
+      continue;
+    }
+
+    const available = toMinutes(next.start) - toMinutes(prev.end);
+    const cls = classifyTransition(originB, destB);
+
+    // Cross-campus combo we don't have a real transit model for yet
+    // (Medical, The Hill, Ross Athletic Campus, off-campus, ...). Flag
+    // it plainly rather than pretending it's a normal walk.
+    if(cls.type === "unsupported"){
+      transitions.push({
+        prev, next, skipped:true, reason:"unsupported_transfer",
+        type:"unsupported", available, campusA:cls.campusA, campusB:cls.campusB,
+      });
+      continue;
+    }
+
+    if(cls.type === "campus_transfer"){
+      // Fixed Blue Bus estimate — synchronous, no route fetch needed.
+      const route = campusTransferSegment(cls.direction);
+      const travel = route.durationMin; // conservative (MAX) estimate, per spec
+      const buffer = available - travel;
+      let status = "green", label = "Comfortable";
+      if(buffer < -5){ status="red"; label="Won't make it"; }
+      else if(buffer < 0){ status="red"; label="Very tight"; }
+      else if(buffer < 5){ status="yellow"; label="Tight"; }
+      const leaveByMin = toMinutes(next.start) - travel;
+      transitions.push({
+        prev, next, skipped:false, loading:false, type:"campus_transfer",
+        available, travel, buffer, status, label,
+        leaveBy: fmtMinutesAsClock(leaveByMin),
+        sameBuilding:false, route,
+      });
+      continue;
+    }
+
+    // type === "walking" — real pedestrian routing, cached by lat/lng pair.
+    const cached = routeCache.get(routeCacheKey(originB, destB));
+    if(!cached){
+      transitions.push({ prev, next, skipped:false, loading:true, type:"walking", available, originB, destB, sameBuilding: prev.building===next.building });
+      continue;
+    }
+
+    const route = cached;
+    const travel = route.durationMin ?? 0;
+    const buffer = available - travel;
+    let status = "green", label="Comfortable";
+    if(buffer < 0){ status="red"; label="Very tight"; }
+    else if(buffer < 5){ status="yellow"; label="Tight"; }
+    const leaveByMin = toMinutes(next.start) - travel;
+    transitions.push({
+      prev, next, skipped:false, loading:false, type:"walking", available, travel, buffer, status, label,
+      leaveBy: fmtMinutesAsClock(leaveByMin),
+      sameBuilding: prev.building===next.building,
+      route,
+    });
+  }
+
+  const totalWalk = transitions.reduce((s,t)=> s + (t.skipped||t.loading?0:t.travel), 0);
+  const tightCount = transitions.filter(t=>!t.skipped && !t.loading && (t.status==="yellow"||t.status==="red")).length;
+  const campusTransferCount = transitions.filter(t=>t.type==="campus_transfer").length;
+  const loadingCount = transitions.filter(t=>t.loading).length;
+
+  return { day, dayClasses, transitions, overlaps, totalWalk, tightCount, campusTransferCount, classCount: dayClasses.length, loadingCount };
+}
+
+function analyzeWeek(classes){
+  return DAY_ORDER.slice(0,5).map(day=>analyzeDay(classes, day));
+}
+
+/* ---------------------------------------------------------------------- *
+ * Async route fetching. analyzeDay() itself stays synchronous (see
+ * above); these functions fetch whatever routes are still missing for a
+ * given day/week, one request per building-to-building segment, and
+ * trigger a re-render only if the user is still looking at a view that
+ * needs the result.
+ * ---------------------------------------------------------------------- */
+async function fetchMissingRoutesForDay(day){
+  const analysis = analyzeDay(state.classes, day);
+  const pending = analysis.transitions.filter(t=>t.loading);
+  if(!pending.length) return false;
+  // Each building-to-building leg is requested separately (EECS→LEC,
+  // LEC→North Quad, ...) rather than one combined multi-stop request, so
+  // each segment can be drawn/labeled independently and a failure on one
+  // leg doesn't block the others.
+  await Promise.all(pending.map(t=>getWalkingRoute(t.originB, t.destB)));
+  return true;
+}
+
+function ensureRoutesForDay(day){
+  fetchMissingRoutesForDay(day).then(changed=>{
+    if(changed && state.view==="day" && state.activeDay===day) render();
+  });
+}
+
+function ensureRoutesForWeek(){
+  Promise.all(DAY_ORDER.slice(0,5).map(d=>fetchMissingRoutesForDay(d))).then(results=>{
+    if(results.some(Boolean) && state.view==="weekly") render();
+  });
+}
+
+/* ---------------------------------------------------------------------- *
+ * APP STATE
+ * ---------------------------------------------------------------------- */
+const state = {
+  view: "landing",       // landing | builder | confirm | weekly | day
+  classes: ScheduleStore.load(),
+  pendingImport: null,    // classes awaiting confirmation (from CSV)
+  activeDay: "Mon",
+  editingId: null,
+  isDemo: false,
+  modal: null,
+};
+
+function persist(){ ScheduleStore.save(state.classes); }
+
+/* ---------------------------------------------------------------------- *
+ * DEMO DATA
+ * ---------------------------------------------------------------------- */
+function loadDemoSchedule(){
+  // Timings are deliberately varied so the demo shows all three
+  // "Will I make it?" states (comfortable / tight / very tight), plus a
+  // North Campus -> Central Campus campus_transfer (EECS -> East Hall,
+  // only 10 min available against a 20 min bus estimate) so the Blue
+  // Bus transfer UI is visible without the student adding anything.
+  const demo = [
+    { course:"EECS 281", building:"BEYST", room:"169", days:["Mon","Wed","Fri"], start:"09:00", end:"10:30" },
+    { course:"EECS 370", building:"EECS", room:"1311", days:["Mon","Wed","Fri"], start:"10:40", end:"12:00" },
+    { course:"MATH 214", building:"EH", room:"", days:["Mon","Wed","Fri"], start:"12:10", end:"13:00" },
+    { course:"ENGLISH 125", building:"AH", room:"2001", days:["Tue","Thu"], start:"09:30", end:"11:00" },
+    { course:"MATH 115", building:"MH", room:"", days:["Tue","Thu"], start:"11:05", end:"12:25" },
+    { course:"PSYCH 111", building:"EH", room:"", days:["Tue"], start:"12:33", end:"13:50" },
+    { course:"COMM 101", building:"NQ", room:"", days:["Thu"], start:"12:33", end:"13:50" },
+    { course:"EECS 203", building:"FXB", room:"", days:["Fri"], start:"13:30", end:"15:00" },
+  ].map(c=>({...c, id:uid()}));
+  state.classes = demo;
+  state.isDemo = true;
+  persist();
+}
+
+/* ---------------------------------------------------------------------- *
+ * NAV
+ * ---------------------------------------------------------------------- */
+function goto(view, extra){
+  state.view = view;
+  if(extra) Object.assign(state, extra);
+  render();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+document.getElementById("brand-home").addEventListener("click", ()=>goto("landing"));
+
+function renderNav(){
+  const nav = document.getElementById("nav-links");
+  if(state.view==="landing"){ nav.innerHTML=""; return; }
+  const items = [
+    {v:"builder", label:"Schedule"},
+    {v:"weekly", label:"Weekly"},
+    {v:"day", label:"Day View"},
+  ];
+  nav.innerHTML = items.map(i=>`<button class="nav-btn ${state.view===i.v?"active":""}" data-nav="${i.v}"><span class="nav-label">${i.label}</span></button>`).join("")
+    + `<button class="nav-btn" id="reset-btn" title="Clear saved schedule">Reset</button>`;
+  nav.querySelectorAll("[data-nav]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const v = btn.dataset.nav;
+      if(v==="day") goto("day", {activeDay: state.activeDay || "Mon"});
+      else goto(v);
+    });
+  });
+  document.getElementById("reset-btn").addEventListener("click", ()=>{
+    openModal({
+      title:"Clear your schedule?",
+      body:"This removes all classes stored in this browser. This can't be undone.",
+      confirmLabel:"Clear schedule",
+      danger:true,
+      onConfirm(){
+        state.classes = [];
+        state.isDemo = false;
+        persist();
+        goto("landing");
+      }
+    });
+  });
+}
+
+/* ---------------------------------------------------------------------- *
+ * MODAL
+ * ---------------------------------------------------------------------- */
+function openModal(cfg){ state.modal = cfg; renderModal(); }
+function closeModal(){ state.modal = null; renderModal(); }
+function renderModal(){
+  let el = document.getElementById("modal-root");
+  if(el) el.remove();
+  if(!state.modal) return;
+  el = document.createElement("div");
+  el.id = "modal-root";
+  el.className = "modal-overlay";
+  const m = state.modal;
+  el.innerHTML = `
+    <div class="modal">
+      <h3>${m.title}</h3>
+      <p>${m.body}</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" id="modal-cancel">Cancel</button>
+        <button class="btn ${m.danger?"btn-danger":"btn-primary"} btn-sm" id="modal-confirm">${m.confirmLabel}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  document.getElementById("modal-cancel").onclick = closeModal;
+  document.getElementById("modal-confirm").onclick = ()=>{ m.onConfirm(); closeModal(); };
+  el.addEventListener("click", e=>{ if(e.target===el) closeModal(); });
+}
+
+/* ---------------------------------------------------------------------- *
+ * VIEW: Landing
+ * ---------------------------------------------------------------------- */
+function renderLanding(){
+  const meter = renderMarginMeter(10, 20, "red");
+  return `
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="hero-eyebrow">University of Michigan · Ann Arbor</div>
+        <h1>Know the exact minute you have to leave.</h1>
+        <p class="sub">GoBlue Routes turns your Michigan schedule into a walk-by-walk, bus-by-bus plan — and flags it before 8am if a transition just won't work.</p>
+        <div class="hero-ctas">
+          <button class="btn btn-maize" id="cta-build">Build my schedule</button>
+          <button class="btn btn-ghost" id="cta-demo">Try a demo</button>
+        </div>
+        <div class="hero-note">No account. Nothing leaves your browser.</div>
+      </div>
+      <div class="landing-preview">
+        <div class="landing-preview-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="landing-preview-body">
+          <div class="mini-timeline">
+            <div class="mini-row"><b>10:40 AM</b>&nbsp;EECS 370 · EECS Building</div>
+            <div class="mini-row"><b>12:10 PM</b>&nbsp;MATH 214 · East Hall</div>
+          </div>
+          ${meter}
+          <div class="mini-verdict">🚌 North → Central campus transfer — 20 min needed, only 10 min between classes. GoBlue Routes catches this before it becomes a missed class.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>What happens to every transition</h2>
+      <p class="lead">Same four checks, run automatically for every gap in your week.</p>
+      <div class="check-list">
+        <div class="check-row">
+          <div><span class="idx">01</span><h3>Classify it</h3></div>
+          <p>Same campus, North ↔ Central, or a combination the app doesn't model yet (Medical, The Hill, Ross Athletic) — read straight from the Michigan building catalog.</p>
+        </div>
+        <div class="check-row">
+          <div><span class="idx">02</span><h3>Route or estimate</h3></div>
+          <p>Same-campus legs get a real pedestrian route along sidewalks and paths. North ↔ Central legs get a 15–20 min Blue Bus estimate instead of a pretend walk.</p>
+        </div>
+        <div class="check-row">
+          <div><span class="idx">03</span><h3>Measure the margin</h3></div>
+          <p>Time needed against time available, shown as an actual margin — not just a green/yellow/red label.</p>
+        </div>
+        <div class="check-row">
+          <div><span class="idx">04</span><h3>Give you a leave-by time</h3></div>
+          <p>Every transition, every day of the week — so "will I make it?" has an answer before you're already walking.</p>
+        </div>
+      </div>
+      <p class="footnote" style="margin-top:28px;">Also in the box: search 600+ Michigan buildings by name or abbreviation, import a schedule from CSV, and a weekly overview of every tight transition. All of it stays in your browser — no account, no server database.</p>
+    </div>
+  </section>
+  `;
+}
+function wireLanding(){
+  document.getElementById("cta-build").addEventListener("click", ()=>goto("builder"));
+  document.getElementById("cta-demo").addEventListener("click", ()=>{
+    loadDemoSchedule();
+    goto("weekly");
+  });
+}
+
+/* ---------------------------------------------------------------------- *
+ * VIEW: Builder (manual entry + CSV upload)
+ * ---------------------------------------------------------------------- */
+let builderDraft = { course:"", building:"", buildingCode:"", room:"", days:[], start:"", end:"" };
+let buildingSuggestQuery = "";
+
+function resetDraft(){ builderDraft = { course:"", building:"", buildingCode:"", room:"", days:[], start:"", end:"" }; state.editingId=null; }
+
+function renderBuilder(){
+  const items = state.classes;
+  return `
+  <div class="container page">
+    <div class="page-head">
+      <div><h1>Build your schedule</h1><p>Add each class once — GoBlue Routes will build the route for every day it repeats.</p></div>
+      ${items.length ? `<button class="btn btn-primary" id="to-weekly">See my routes (${items.length})</button>` : ``}
+    </div>
+
+    <div class="builder-grid">
+      <div>
+        <div class="card pad" style="margin-bottom:20px;">
+          <div class="upload-box">
+            <div style="font-weight:700;">Upload a schedule (CSV)</div>
+            <div class="footnote" style="margin-bottom:6px;">Columns: course, building, room, days, start_time, end_time</div>
+            <input type="file" id="csv-input" accept=".csv" />
+            <div style="margin-top:10px;">
+              <button class="btn btn-ghost btn-sm" id="download-template">Download CSV template</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card pad" style="margin-bottom:20px;">
+          <div style="font-weight:700; margin-bottom:4px;">Upload a screenshot</div>
+          <div class="footnote">Image parsing needs an OCR/AI API key, which isn't configured in this demo, so this is disabled rather than pretending to parse it. Use manual entry or CSV instead.</div>
+        </div>
+
+        <h3 style="margin-bottom:10px;font-size:15px;">Your classes</h3>
+        ${items.length ? `<div class="class-list">${items.map(renderClassItem).join("")}</div>`
+                        : `<div class="empty-state"><div class="big">📋</div>No classes yet. Add one on the right, or upload a CSV above.</div>`}
+      </div>
+
+      <div class="card pad">
+        <h3 style="margin:0 0 14px;font-size:15px;">${state.editingId? "Edit class":"Add a class"}</h3>
+        <div class="form-row">
+          <label>Course name</label>
+          <input id="f-course" placeholder="EECS 281" value="${esc(builderDraft.course)}" />
+        </div>
+        <div class="form-row building-suggest">
+          <label>Building</label>
+          <input id="f-building" placeholder="Search e.g. Electrical Engineering" value="${esc(builderDraft.building)}" autocomplete="off" />
+          <div id="suggest-list"></div>
+        </div>
+        <div class="form-row">
+          <label>Room (optional)</label>
+          <input id="f-room" placeholder="169" value="${esc(builderDraft.room)}" />
+        </div>
+        <div class="form-row">
+          <label>Days</label>
+          <div class="day-toggle-row" id="day-toggles">
+            ${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>`<button type="button" class="day-toggle ${builderDraft.days.includes(d)?"on":""}" data-day="${d}">${d}</button>`).join("")}
+          </div>
+        </div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start time</label><input id="f-start" type="time" value="${builderDraft.start}" /></div>
+          <div class="form-row"><label>End time</label><input id="f-end" type="time" value="${builderDraft.end}" /></div>
+        </div>
+        <button class="btn btn-primary btn-block" id="save-class">${state.editingId? "Save changes":"Add class"}</button>
+        ${state.editingId? `<button class="btn btn-ghost btn-block" style="margin-top:8px;" id="cancel-edit">Cancel</button>`:``}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderClassItem(c){
+  const b = BUILDINGS[c.building];
+  return `
+  <div class="class-item">
+    <div>
+      <div class="title">${esc(c.course)} ${!b? `<span class="tag-unknown">unknown building</span>`:""}</div>
+      <div class="meta">${b?b.name:esc(c.buildingRaw||c.building)}${c.room? " · Rm "+esc(c.room):""} · ${fmtTime(c.start)}–${fmtTime(c.end)}</div>
+      <div class="day-pills">${c.days.map(d=>`<span class="day-pill">${d}</span>`).join("")}</div>
+    </div>
+    <div class="item-actions">
+      <button class="icon-btn" data-edit="${c.id}" title="Edit">✏️</button>
+      <button class="icon-btn" data-del="${c.id}" title="Delete">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function esc(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+function wireBuilder(){
+  document.getElementById("csv-input")?.addEventListener("change", handleCsvUpload);
+  document.getElementById("download-template")?.addEventListener("click", downloadCsvTemplate);
+  document.getElementById("to-weekly")?.addEventListener("click", ()=>goto("weekly"));
+
+  const bInput = document.getElementById("f-building");
+  bInput.addEventListener("input", (e)=>{
+    builderDraft.building = e.target.value;
+    builderDraft.buildingCode = "";
+    buildingSuggestQuery = e.target.value;
+    renderSuggestList();
+  });
+  renderSuggestList();
+
+  document.getElementById("day-toggles").querySelectorAll(".day-toggle").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const d = btn.dataset.day;
+      const idx = builderDraft.days.indexOf(d);
+      if(idx>-1) builderDraft.days.splice(idx,1); else builderDraft.days.push(d);
+      btn.classList.toggle("on");
+    });
+  });
+
+  document.getElementById("f-course").addEventListener("input", e=> builderDraft.course = e.target.value);
+  document.getElementById("f-room").addEventListener("input", e=> builderDraft.room = e.target.value);
+  document.getElementById("f-start").addEventListener("input", e=> builderDraft.start = e.target.value);
+  document.getElementById("f-end").addEventListener("input", e=> builderDraft.end = e.target.value);
+
+  document.getElementById("save-class").addEventListener("click", saveClassFromDraft);
+  document.getElementById("cancel-edit")?.addEventListener("click", ()=>{ resetDraft(); render(); });
+
+  document.querySelectorAll("[data-edit]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const c = state.classes.find(x=>x.id===btn.dataset.edit);
+      if(!c) return;
+      const b = BUILDINGS[c.building];
+      builderDraft = { course:c.course, building: b?b.name:(c.buildingRaw||c.building), buildingCode:c.building, room:c.room||"", days:[...c.days], start:c.start, end:c.end };
+      state.editingId = c.id;
+      render();
+    });
+  });
+  document.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.classes = state.classes.filter(x=>x.id!==btn.dataset.del);
+      persist();
+      render();
+    });
+  });
+}
+
+function renderSuggestList(){
+  const el = document.getElementById("suggest-list");
+  if(!el) return;
+  if(!buildingSuggestQuery || builderDraft.buildingCode){ el.innerHTML=""; el.className=""; return; }
+  const results = searchBuildings(buildingSuggestQuery);
+  if(!results.length){ el.innerHTML=""; el.className=""; return; }
+  el.className = "suggest-list";
+  el.innerHTML = results.map(r=>`<div class="suggest-item" data-code="${r.code}">${r.name} <small>${r.code} · ${r.campus}</small></div>`).join("");
+  el.querySelectorAll(".suggest-item").forEach(item=>{
+    item.addEventListener("click", ()=>{
+      const code = item.dataset.code;
+      builderDraft.buildingCode = code;
+      builderDraft.building = BUILDINGS[code].name;
+      document.getElementById("f-building").value = builderDraft.building;
+      el.innerHTML=""; el.className="";
+    });
+  });
+}
+
+function saveClassFromDraft(){
+  if(!builderDraft.course.trim()){ alert("Add a course name."); return; }
+  if(!builderDraft.days.length){ alert("Select at least one day."); return; }
+  if(!builderDraft.start || !builderDraft.end){ alert("Add a start and end time."); return; }
+  if(toMinutes(builderDraft.end) <= toMinutes(builderDraft.start)){ alert("End time must be after start time."); return; }
+
+  const record = {
+    id: state.editingId || uid(),
+    course: builderDraft.course.trim(),
+    building: builderDraft.buildingCode || matchBuildingLoose(builderDraft.building) || "",
+    buildingRaw: builderDraft.building,
+    room: builderDraft.room.trim(),
+    days: [...builderDraft.days],
+    start: builderDraft.start,
+    end: builderDraft.end,
+  };
+
+  if(state.editingId){
+    state.classes = state.classes.map(c=> c.id===state.editingId ? record : c);
+  }else{
+    state.classes = [...state.classes, record];
+  }
+  persist();
+  resetDraft();
+  buildingSuggestQuery = "";
+  render();
+}
+
+function matchBuildingLoose(text){
+  if(!text) return "";
+  const hit = searchBuildings(text)[0];
+  return hit ? hit.code : "";
+}
+
+/* ---------------------------------------------------------------------- *
+ * CSV import + confirm screen
+ * ---------------------------------------------------------------------- */
+function downloadCsvTemplate(){
+  const csv = "course,building,room,days,start_time,end_time\nEECS 281,BBB,169,Mon;Wed,09:00,10:30\nMATH 214,East Hall,,Mon;Wed;Fri,12:00,13:00\n";
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "goblue-routes-template.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function handleCsvUpload(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = parseCsv(reader.result);
+      state.pendingImport = parsed;
+      goto("confirm");
+    }catch(err){
+      alert("Couldn't read that CSV. Check it matches the template columns.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+}
+
+function parseCsv(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+  const header = lines[0].split(",").map(h=>h.trim().toLowerCase());
+  const idx = k => header.indexOf(k);
+  const rows = lines.slice(1);
+  return rows.map(line=>{
+    const cells = line.split(",");
+    const daysRaw = (cells[idx("days")]||"").trim();
+    const days = daysRaw.split(/[;|]/).map(d=>normalizeDay(d.trim())).filter(Boolean);
+    const buildingRaw = (cells[idx("building")]||"").trim();
+    const code = matchBuildingLoose(buildingRaw) || (BUILDINGS[buildingRaw.toUpperCase()] ? buildingRaw.toUpperCase() : "");
+    return {
+      id: uid(),
+      course: (cells[idx("course")]||"").trim(),
+      buildingRaw,
+      building: code,
+      room: (cells[idx("room")]||"").trim(),
+      days,
+      start: normalizeTime((cells[idx("start_time")]||"").trim()),
+      end: normalizeTime((cells[idx("end_time")]||"").trim()),
+    };
+  });
+}
+
+function normalizeDay(d){
+  const map = {mon:"Mon",monday:"Mon",tue:"Tue",tues:"Tue",tuesday:"Tue",wed:"Wed",wednesday:"Wed",thu:"Thu",thur:"Thu",thurs:"Thu",thursday:"Thu",fri:"Fri",friday:"Fri",sat:"Sat",saturday:"Sat",sun:"Sun",sunday:"Sun"};
+  return map[d.toLowerCase()] || "";
+}
+function normalizeTime(t){
+  if(!t) return "";
+  if(/^\d{1,2}:\d{2}$/.test(t)) return t.length===4? "0"+t : t;
+  const m = t.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+  if(m){
+    let h = parseInt(m[1],10); const min=m[2]; const ap = m[3].toLowerCase();
+    if(ap==="pm" && h!==12) h+=12;
+    if(ap==="am" && h===12) h=0;
+    return `${String(h).padStart(2,"0")}:${min}`;
+  }
+  return t;
+}
+
+function renderConfirm(){
+  const rows = state.pendingImport || [];
+  return `
+  <div class="container page">
+    <div class="page-head">
+      <div><h1>Confirm your classes</h1><p>Check every row before we build your routes. Unknown buildings are flagged in red — pick the right one from the list.</p></div>
+    </div>
+    <div class="card pad">
+      <div style="overflow:auto;">
+      <table class="confirm-table">
+        <thead><tr><th>Course</th><th>Building</th><th>Room</th><th>Days</th><th>Start</th><th>End</th><th></th></tr></thead>
+        <tbody>
+          ${rows.map((r,i)=>`
+            <tr>
+              <td><input data-f="course" data-i="${i}" value="${esc(r.course)}"/></td>
+              <td>
+                <select data-f="building" data-i="${i}">
+                  <option value="">${r.building? "": "— unknown — pick one —"}</option>
+                  ${Object.entries(BUILDINGS).map(([code,b])=>`<option value="${code}" ${r.building===code?"selected":""}>${b.name}</option>`).join("")}
+                </select>
+                ${!r.building? `<div class="tag-unknown" style="margin-top:4px;">was: ${esc(r.buildingRaw||"—")}</div>`:""}
+              </td>
+              <td><input data-f="room" data-i="${i}" value="${esc(r.room)}"/></td>
+              <td><input data-f="days" data-i="${i}" value="${r.days.join(';')}"/></td>
+              <td><input data-f="start" data-i="${i}" type="time" value="${r.start}"/></td>
+              <td><input data-f="end" data-i="${i}" type="time" value="${r.end}"/></td>
+              <td><button class="icon-btn" data-remove="${i}">✕</button></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button class="btn btn-primary" id="confirm-import">Add ${rows.length} classes to my schedule</button>
+        <button class="btn btn-ghost" id="cancel-import">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+}
+function wireConfirm(){
+  document.querySelectorAll("[data-f]").forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      const i = Number(inp.dataset.i), f = inp.dataset.f;
+      let v = inp.value;
+      if(f==="days") v = v.split(/[;|]/).map(d=>normalizeDay(d.trim())).filter(Boolean);
+      state.pendingImport[i][f] = v;
+    });
+  });
+  document.querySelectorAll("[data-remove]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.pendingImport.splice(Number(btn.dataset.remove),1);
+      render();
+    });
+  });
+  document.getElementById("cancel-import").addEventListener("click", ()=>{ state.pendingImport=null; goto("builder"); });
+  document.getElementById("confirm-import").addEventListener("click", ()=>{
+    const clean = state.pendingImport.filter(r=>r.course && r.days.length && r.start && r.end);
+    state.classes = [...state.classes, ...clean.map(r=>({id:r.id,course:r.course,building:r.building,buildingRaw:r.buildingRaw,room:r.room,days:r.days,start:r.start,end:r.end}))];
+    state.pendingImport = null;
+    state.isDemo = false;
+    persist();
+    goto("weekly");
+  });
+}
+
+/* ---------------------------------------------------------------------- *
+ * VIEW: Weekly overview
+ * ---------------------------------------------------------------------- */
+function renderWeekly(){
+  const week = analyzeWeek(state.classes);
+  return `
+  <div class="container page">
+    <div class="page-head">
+      <div><h1>Your week ${state.isDemo?'<span class="badge-demo">DEMO DATA</span>':""}</h1><p>Tap a day to see the map and full timeline.</p></div>
+      <button class="btn btn-ghost" id="edit-schedule">Edit schedule</button>
+    </div>
+    <div class="week-grid">
+      ${week.map(d=>`
+        <div class="week-card" data-day="${d.day}">
+          <h3>${DAY_LABEL[d.day]}</h3>
+          <div class="week-stat"><span>Classes</span><b>${d.classCount}</b></div>
+          <div class="week-stat"><span>Walking</span><b>${d.classCount? "~"+d.totalWalk+" min":"—"}</b></div>
+          <div class="week-stat"><span>Transitions</span><b>${d.transitions.length}</b></div>
+          ${d.campusTransferCount>0? `<span class="tight-badge warn">🚌 ${d.campusTransferCount} campus transfer${d.campusTransferCount>1?"s":""}</span>` : ""}
+          ${d.tightCount>0? `<span class="tight-badge warn">${d.tightCount} tight transition${d.tightCount>1?"s":""}</span>`
+                            : d.classCount>1? `<span class="tight-badge ok">All comfortable</span>` : ""}
+          ${d.overlaps.length? `<div class="footnote" style="color:var(--red-fg);">⚠ ${d.overlaps.length} overlapping class${d.overlaps.length>1?"es":""}</div>`:""}
+        </div>`).join("")}
+    </div>
+    <p class="footnote" style="margin-top:18px;">Walking times use real pedestrian routing where available (sidewalks/paths, not straight lines). North ↔ Central legs use a ~15–20 min Blue Bus transfer estimate instead. Some totals may still be calculating — open a day to see live progress. Actual time may vary.</p>
+  </div>`;
+}
+function wireWeekly(){
+  document.getElementById("edit-schedule").addEventListener("click", ()=>goto("builder"));
+  document.querySelectorAll("[data-day]").forEach(card=>{
+    card.addEventListener("click", ()=> goto("day", {activeDay: card.dataset.day}));
+  });
+  ensureRoutesForWeek();
+}
+
+/* ---------------------------------------------------------------------- *
+ * VIEW: Day detail (timeline + map)
+ * ---------------------------------------------------------------------- */
+let leafletMap = null;
+
+function renderDay(){
+  const day = state.activeDay || "Mon";
+  const analysis = analyzeDay(state.classes, day);
+  return `
+  <div class="container page">
+    <div class="page-head">
+      <div><h1>${DAY_LABEL[day]} ${state.isDemo?'<span class="badge-demo">DEMO DATA</span>':""}</h1><p>Your route for the day, building to building.</p></div>
+    </div>
+    <div class="day-tabs">
+      ${DAY_ORDER.slice(0,5).map(d=>`<button class="day-tab ${d===day?"active":""}" data-day="${d}">${d}</button>`).join("")}
+    </div>
+
+    <div class="summary-bar">
+      <div class="summary-tile"><div class="num">${analysis.classCount}</div><div class="lab">Classes</div></div>
+      <div class="summary-tile"><div class="num">${analysis.classCount? "~"+analysis.totalWalk:"0"}</div><div class="lab">Walking (min)</div></div>
+      <div class="summary-tile"><div class="num">${analysis.transitions.length}</div><div class="lab">Transitions</div></div>
+      <div class="summary-tile"><div class="num">${analysis.tightCount}</div><div class="lab">Tight transitions</div></div>
+    </div>
+
+    ${analysis.overlaps.length ? `<div class="overlap-warning">⚠ ${analysis.overlaps.map(([a,b])=>`<b>${esc(a.course)}</b> and <b>${esc(b.course)}</b> overlap on ${DAY_LABEL[day]} — no route was calculated for that transition.`).join("<br/>")}</div>` : ""}
+
+    ${analysis.classCount===0 ? `<div class="empty-state"><div class="big">🌤️</div>No classes on ${DAY_LABEL[day]}. Enjoy the free day.</div>` : `
+    <div class="day-grid">
+      <div class="timeline">
+        ${analysis.dayClasses.map((c,i)=>{
+          const b = BUILDINGS[c.building];
+          const trans = analysis.transitions[i]; // transition AFTER this class
+          return `
+          <div class="class-block">
+            <div class="time">${fmtTime(c.start)} – ${fmtTime(c.end)}</div>
+            <div class="course">${esc(c.course)}</div>
+            <div class="loc">${b? b.name : `<span class="tag-unknown">Unknown building: ${esc(c.buildingRaw||c.building||"—")}</span>`}${c.room? " · Rm "+esc(c.room):""}</div>
+          </div>
+          ${trans ? renderTransition(trans) : ""}
+          `;
+        }).join("")}
+      </div>
+      <div>
+        <div id="map"></div>
+        <p class="footnote">Estimated walking times — not live traffic or verified sidewalk routing. North ↔ Central legs show a Blue Bus transfer estimate (~15–20 min), not a walking route.</p>
+      </div>
+    </div>
+    `}
+  </div>`;
+}
+
+function renderTransition(t){
+  if(t.skipped){
+    let msg;
+    if(t.reason==="overlap") msg = "Classes overlap — no route calculated.";
+    else if(t.reason==="no_coords") msg = "Location coordinates unavailable.";
+    else if(t.reason==="unsupported_transfer") msg = `${t.campusA} → ${t.campusB} isn't a route GoBlue Routes supports yet — check a map app for this one.`;
+    else msg = "Unknown building — add/select a location to see this transition.";
+    const cls = t.reason==="unsupported_transfer" ? "unsupported" : "yellow";
+    return `<div class="transition ${cls}"><div class="headline">⚠ ${msg}</div></div>`;
+  }
+  if(t.loading){
+    return `<div class="transition yellow">
+      <div class="headline">⏳ Calculating walking route…</div>
+      <div class="leaveby">${t.available} min available between classes</div>
+    </div>`;
+  }
+
+  if(t.type==="campus_transfer"){
+    const icon = t.status==="green" ? "✓" : t.status==="yellow" ? "⚠" : (t.label==="Won't make it" ? "🚨" : "⛔");
+    const headline = t.label==="Won't make it"
+      ? `🚨 You likely won't make this transition`
+      : `${icon} ${t.label} — ${t.available} min available, ~${t.route.minDurationMin}–${t.route.maxDurationMin} min bus transfer`;
+    return `
+    <div class="transition campus-transfer ${t.status}">
+      <div class="headline"><span class="bus-badge">🚌 ${t.route.direction}</span>${headline}</div>
+      ${renderMarginMeter(t.available, t.route.maxDurationMin, t.status)}
+      <div class="leaveby">~${t.route.maxDurationMin} min needed (conservative estimate) · ${t.buffer>=0? t.buffer+" min buffer" : Math.abs(t.buffer)+" min short"} · Leave ${esc(t.prev.building?BUILDINGS[t.prev.building].name:"")} by ${t.leaveBy} · Michigan Blue Bus</div>
+    </div>`;
+  }
+
+  const icon = t.status==="green" ? "✓" : t.status==="yellow" ? "⚠" : "⛔";
+  const sameNote = t.sameBuilding ? " (same building)" : "";
+  const estimatedNote = t.route && t.route.estimated ? " · Estimated route — walking directions unavailable." : "";
+  return `
+  <div class="transition ${t.status}">
+    <div class="headline">${icon} ${t.label} — ${t.available} min available, ~${t.travel} min walk${sameNote}</div>
+    ${renderMarginMeter(t.available, t.travel, t.status)}
+    <div class="leaveby">${t.travel} min walk · ${t.buffer>=0? t.buffer+" min buffer" : Math.abs(t.buffer)+" min short"} · Leave ${esc(t.prev.building?BUILDINGS[t.prev.building].name:"")} by ${t.leaveBy}${estimatedNote}</div>
+  </div>`;
+}
+
+function wireDay(){
+  document.querySelectorAll(".day-tab").forEach(tab=>{
+    tab.addEventListener("click", ()=> goto("day", {activeDay: tab.dataset.day}));
+  });
+  initMap();
+  ensureRoutesForDay(state.activeDay || "Mon");
+}
+
+function initMap(){
+  const day = state.activeDay || "Mon";
+  const analysis = analyzeDay(state.classes, day);
+  const container = document.getElementById("map");
+  if(!container) return;
+
+  if(typeof L === "undefined"){
+    container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#a9bcd1;font-size:14px;padding:20px;text-align:center;background:#0f2842;border-radius:16px;">
+      Map library failed to load (no network access to the map tile CDN). Timeline and travel-time estimates below still work.</div>`;
+    return;
+  }
+
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  leafletMap = L.map("map", {scrollWheelZoom:true});
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom:19, attribution:"&copy; OpenStreetMap contributors"
+  }).addTo(leafletMap);
+
+  const points = analysis.dayClasses
+    .map(c=>BUILDINGS[c.building])
+    .filter(Boolean);
+
+  if(points.length===0){
+    leafletMap.setView([42.2808,-83.7382], 15); // default: central campus
+    return;
+  }
+
+  // Bounds start as just the building markers, then grow to include
+  // actual route geometry once segments are drawn below — so the map
+  // frames the real walked path, not just the endpoints.
+  const boundsPoints = [];
+  points.forEach((b,i)=>{
+    const marker = L.circleMarker([b.lat,b.lng], {
+      radius:13, weight:2, color:"#153a5c", fillColor: i===0? "#ffcb05":"#2a628f", fillOpacity:1
+    }).addTo(leafletMap);
+    marker.bindTooltip(`${i+1}. ${b.name}`, {permanent:false, direction:"top"});
+    L.marker([b.lat,b.lng], {
+      icon: L.divIcon({
+        className: "",
+        html: `<div style="font:800 11px 'Space Mono',ui-monospace,monospace;color:${i===0?"#071a2c":"#f4f7fb"};transform:translate(-50%,-50%);pointer-events:none;text-align:center;">${i+1}</div>`,
+        iconSize: [0,0],
+      }),
+    }).addTo(leafletMap);
+    boundsPoints.push([b.lat,b.lng]);
+  });
+
+  // Draw each building-to-building leg using its own fetched route
+  // geometry (real pedestrian path when available). Segments still
+  // loading are intentionally NOT drawn as a straight line — the
+  // timeline shows "Calculating walking route…" for those instead, and
+  // they'll appear here once resolved. Segments that fell back to the
+  // estimate are drawn distinctly (thinner, dashed, red) so a straight
+  // line is never mistaken for a real route.
+  analysis.transitions.forEach(t=>{
+    // Unsupported cross-campus combos (Medical, The Hill, Ross Athletic
+    // Campus, off-campus, ...) get no line at all — drawing anything
+    // here would imply a route we don't actually model. The two
+    // buildings still show as plain numbered markers above.
+    if(t.skipped || t.loading) return;
+
+    if(t.type === "campus_transfer"){
+      const originB = BUILDINGS[t.prev.building], destB = BUILDINGS[t.next.building];
+      if(!originB || !destB) return;
+      const segment = [[originB.lat,originB.lng],[destB.lat,destB.lng]];
+      // Deliberately NOT a pedestrian route — a dashed Michigan
+      // blue/maize line with a bus glyph, visually distinct from the
+      // solid maize walking line so it's never mistaken for "just walk
+      // it". This straight segment stands in for the bus link between
+      // the two campus areas; it is never fed into walking-time math.
+      L.polyline(segment, {color:"#ffcb05", weight:4, opacity:.85, dashArray:"2 10", lineCap:"round"}).addTo(leafletMap);
+      L.polyline(segment, {color:"#2a628f", weight:4, opacity:.85, dashArray:"2 10", dashOffset:"6", lineCap:"round"}).addTo(leafletMap);
+      const mid = [(originB.lat+destB.lat)/2, (originB.lng+destB.lng)/2];
+      L.marker(mid, {
+        icon: L.divIcon({
+          className:"",
+          html:`<div style="font-size:18px;transform:translate(-50%,-50%);filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));">🚌</div>`,
+          iconSize:[0,0],
+        }),
+      }).bindTooltip(`Campus transfer · ${t.route.direction} · ~${t.route.minDurationMin}–${t.route.maxDurationMin} min`, {permanent:false, direction:"top"}).addTo(leafletMap);
+      segment.forEach(pt=>boundsPoints.push(pt));
+      return;
+    }
+
+    const route = t.route;
+    if(!route || !route.geometry || route.geometry.length<2) return;
+    const style = route.estimated
+      ? {color:"#ff9494", weight:4, opacity:.8, dashArray:"5 8"}
+      : {color:"#ffcb05", weight:5, opacity:.92, lineJoin:"round"};
+    L.polyline(route.geometry, style).addTo(leafletMap);
+    route.geometry.forEach(pt=>boundsPoints.push(pt));
+  });
+
+  leafletMap.fitBounds(boundsPoints, {padding:[40,40]});
+  if(boundsPoints.length===1) leafletMap.setView(boundsPoints[0], 16);
+}
+
+/* ---------------------------------------------------------------------- *
+ * ROOT RENDER
+ * ---------------------------------------------------------------------- */
+function render(){
+  renderNav();
+  const app = document.getElementById("app");
+  switch(state.view){
+    case "landing": app.innerHTML = renderLanding(); wireLanding(); break;
+    case "builder": app.innerHTML = renderBuilder(); wireBuilder(); break;
+    case "confirm": app.innerHTML = renderConfirm(); wireConfirm(); break;
+    case "weekly": app.innerHTML = renderWeekly(); wireWeekly(); break;
+    case "day": app.innerHTML = renderDay(); wireDay(); break;
+  }
+  renderModal();
+}
+
+// Boot: if a schedule already exists in localStorage, skip landing.
+if(state.classes.length){ state.view = "weekly"; }
+render();
+</script>
+</body>
+</html>
